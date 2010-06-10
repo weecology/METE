@@ -1,5 +1,8 @@
 # Module for fitting and testing Harte et al.'s maximum entropy models
 
+# To Do:
+#    See if applying A.5 to B.1 yeilds an assumption free soln to lambda_1
+
 from __future__ import division
 from math import log
 from scipy.optimize import fsolve
@@ -31,3 +34,17 @@ def get_lambda_1(S, N, approx='no'):
     exp_neg_lambda_1 = fsolve(y, XSTART)
     lambda_1 = -1*log(exp_neg_lambda_1)
     return lambda_1
+
+def get_lambda_P(A, A_0, n):
+    """Solve for lambda_P from Harte et al. 2008
+    
+    Keyword arguments:
+    A -- the spatial scale of interest
+    A_0 -- the maximum spatial scale under consideration
+    n -- the number of individuals of the focal species at scale A_0
+    
+    """
+    assert type(n) is int, "n must be an integer"
+    assert A > 0 and A_0 > 0, "A and A_0 must be greater than 0"
+    assert A <= A_0, "A must be less than or equal to A_0"
+    
