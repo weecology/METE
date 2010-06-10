@@ -27,12 +27,12 @@ def get_lambda_1(S, N, approx='no'):
     assert approx == 'yes' or approx == 'no', """approx must be 'yes', 'no', or
     blank"""
     if approx == 'no':
-        y = lambda x: 1/log(1/(1-x))*x/(1-x)-N/S # x = e**-lambda_1 in B.4
+        y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S # x = e**-lambda_1 in B.4
     else:
-        y = lambda x: x*log(1/x)-S/N
+        y = lambda x: x * log(1 / x) - S / N
     XSTART = 0.999999
     exp_neg_lambda_1 = fsolve(y, XSTART)
-    lambda_1 = -1*log(exp_neg_lambda_1)
+    lambda_1 = -1 * log(exp_neg_lambda_1)
     return lambda_1
 
 def get_lambda_P(A, A_0, n):
