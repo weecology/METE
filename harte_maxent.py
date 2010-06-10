@@ -5,8 +5,17 @@ from math import log
 from scipy.optimize import fsolve
 
 def get_lambda_1(S, N, approx='no'):
-    '''Solve for lambda_1 from Harte et al. 2008 using minimal approximations
-    based on their equation B.4'''
+    """Solve for lambda_1 from Harte et al. 2008
+    
+    Keyword arguments:
+    S -- the number of species
+    N -- the total number of individuals
+    approx -- 'no' uses eq. B.4, which uses minimal approximations
+              'yes' uses eq. 7b which uses an additional approximation
+              the default is 'no' and using the default is strongly recommended
+              unless there is a very clear reason to do otherwise.
+              
+    """
     assert type(S) is int, "S must be an integer"
     assert type(N) is int, "N must be an integer"
     assert S > 1, "S must be greater than 1"
