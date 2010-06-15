@@ -21,8 +21,6 @@ def get_lambda_sad(S, N, approx='no'):
     N -- the total number of individuals
     
     """
-    assert type(S) is int, "S must be an integer"
-    assert type(N) is int, "N must be an integer"
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
@@ -62,3 +60,15 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
                                   DIST_FROM_BOUND)
         lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
     return lambda_spatialdistrib
+
+def downscale_sar(A, S, N, Amin):
+    """Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009"""
+    lambda_sad = get_lambda_sad(S, N)
+    x = exp(-lambda_sad)
+    S = S / x - N * (1 - x) / (x - x ** (N + 1)) * (1 - x ** N / (N + 1))
+    A /= 2
+    N /= 2
+    if A <= Amin:
+        return [S]
+    else:
+        return downscale_sar(A, S, N, Amin) + [S]
