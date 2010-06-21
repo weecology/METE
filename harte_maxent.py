@@ -73,3 +73,16 @@ def downscale_sar(A, S, N, Amin):
     else:
         down_scaled_data = downscale_sar(A, S, N, Amin)
         return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
+
+def upscale_sar(A, S, N, Amax):
+    """Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009"""
+
+def sar(A_0, S_0, N_0, Amin, Amax):
+    """Harte et al. 2009 predictions for the species area relationship
+    
+    Takes a minimum and a maximum area along with the area, richness, and
+    abundance at some anchor scale and determines the richness at all bisected
+    and/or doubled scales so as to include Amin and Amax.
+    
+    """
+    # This is where we will deal with adding the anchor scale to the results
