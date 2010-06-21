@@ -69,6 +69,7 @@ def downscale_sar(A, S, N, Amin):
     A /= 2
     N /= 2
     if A <= Amin:
-        return [S]
+        return ([A], [S])
     else:
-        return downscale_sar(A, S, N, Amin) + [S]
+        down_scaled_data = downscale_sar(A, S, N, Amin)
+        return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
