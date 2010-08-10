@@ -21,6 +21,7 @@ def get_lambda_sad(S, N, approx='no'):
     N -- the total number of individuals
     
     """
+    #TO DO: check to see if 'bisect' can be swapped out for 'fsolve'
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
