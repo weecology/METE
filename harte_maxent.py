@@ -7,7 +7,7 @@
 
 from __future__ import division
 from math import log, exp
-from scipy.optimize import bisect
+from scipy.optimize import bisect, fsolve
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
@@ -75,7 +75,16 @@ def downscale_sar(A, S, N, Amin):
         return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
 
 def upscale_sar(A, S, N, Amax):
-    """Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009"""
+    """Predictions for upscaled SAR using Eqs. 8 and 9 from Harte et al. 2009"""
+    
+    def equations_for_S_2A(x,S_A,N_A):
+        """Implicit equations for S(2A) given S(A) and N(A)"""
+        # TO DO: make this clearer by separating equations and then putting them
+        #        in a list for output
+        out = [x[1] * x[0]**-1 - 2*N_A *
+               ((1 - x[0]) / (x[0] - x[0] ** (2 * N_A + 1))) *
+               (1 - x ** (2 * N_A) / (2 * N_A + 1))]
+        out.append(
 
 def sar(A_0, S_0, N_0, Amin, Amax):
     """Harte et al. 2009 predictions for the species area relationship
