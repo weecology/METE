@@ -8,6 +8,7 @@
 from __future__ import division
 from math import log, exp
 from scipy.optimize import bisect, fsolve
+from numpy import array
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
@@ -77,15 +78,32 @@ def downscale_sar(A, S, N, Amin):
 
 def upscale_sar(A, S, N, Amax):
     """Predictions for upscaled SAR using Eqs. 8 and 9 from Harte et al. 2009"""
-    
-    def equations_for_S_2A(x,S_A,N_A):
+    #TO DO: Swap out arbitrary 0.99 starting value for estimate at A using
+    #       get_lambda_sad
+    def equations_for_S_2A(x, S_A, N_A):
         """Implicit equations for S(2A) given S(A) and N(A)"""
         # TO DO: make this clearer by separating equations and then putting them
         #        in a list for output
-        out = [x[1] * x[0]**-1 - 2*N_A *
-               ((1 - x[0]) / (x[0] - x[0] ** (2 * N_A + 1))) *
-               (1 - x ** (2 * N_A) / (2 * N_A + 1))]
-        out.append(
+        out = [x[1] / x[0] - 2 * N_A *
+               (1 - x[0]) / (x[0] - x[0] ** (2 * N_A + 1)) *
+               (1 - x[0] ** (2 * N_A) / (2 * N_A + 1)) - S_A]
+        n = array(range(1, 2 * N_A + 1))
+        out.append(x[1] / 2 / N_A * sum(x[0] ** n) - sum(x[0] ** n / n))
+        return out
+    
+    def solve_for_S_2A(S, N):
+        x0 = fsolve(equations_for_S_2A, [0.99, S], args=(S, N))
+        S_2A = x0[1]
+        return S_2A
+    
+    S = solve_for_S_2A(S, N)
+    A *= 2
+    N *= 2
+    if A >= Amax:
+        return ([A], [S])
+    else:
+        up_scaled_data = upscale_sar(A, S, N, Amax)
+        return ([A] + up_scaled_data[0], [S] + up_scaled_data[1])
 
 def sar(A_0, S_0, N_0, Amin, Amax):
     """Harte et al. 2009 predictions for the species area relationship
