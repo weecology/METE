@@ -1,9 +1,4 @@
-# Module for fitting and testing Harte et al.'s maximum entropy models
-
-# To Do:
-#    See if applying A.5 to B.1 yeilds an assumption free soln to lambda_1
-#    get_lambda_P does not find a root because it appears that there is no root
-#       for equation B.5 - investigate
+"""Module for fitting and testing Harte et al.'s maximum entropy models"""
 
 from __future__ import division
 from math import log, exp
