@@ -4,6 +4,7 @@ from __future__ import division
 from math import log, exp
 from scipy.optimize import bisect, fsolve
 from numpy import array
+import matplotlib.pyplot as plt
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
@@ -109,3 +110,12 @@ def sar(A_0, S_0, N_0, Amin, Amax):
     
     """
     # This is where we will deal with adding the anchor scale to the results
+    
+def plot_rad(Ns):
+    """Plot a rank-abundance distribution based on a vector of abundances"""
+    Ns.sort(reverse=True)
+    rank = range(1, len(Ns) + 1)
+    plt.plot(rank, Ns, 'bo-')
+    plt.xlabel('Rank')
+    plt.ylabel('Abundance')
+    plt.show()
