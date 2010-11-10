@@ -8,17 +8,27 @@ import matplotlib.pyplot as plt
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
-DIST_FROM_BOUND = 10 ** -10
+DIST_FROM_BOUND = 10 ** -15
 
-def get_lambda_sad(S, N, approx='no'):
-    """Solve for lambda_1 from Harte et al. 2008
-    
+def get_lambda_sad(S, N, approx='no', version='2009'):
+    """Solve for lambda_1 
+        
     Keyword arguments:
     S -- the number of species
     N -- the total number of individuals
+    approx -- 'no' uses either 2008-eq. B.4 or 2009-eq. 3, which use minimal approximations
+              'yes' uses eq. 7b which uses an additional approximation (e^-?_1˜1-?_1)
+              the default is 'no'; using the default is strongly recommended
+              unless there is a very clear reason to do otherwise.
+    version -- '2008': Harte et al. 2008 based on eq.(B.4)
+               '2009': Harte et al. 2009 based on eq.(3)
+               the default is '2009'; using the default is recommended for
+               relatively low values of S
+
     
     """
     #TO DO: check to see if 'bisect' can be swapped out for 'fsolve'
+    
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
@@ -26,9 +36,18 @@ def get_lambda_sad(S, N, approx='no'):
     BOUNDS = [0, 1]
     
     # Solve for lambda_sad using the substitution x = e**-lambda_1
-    y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
-    exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, BOUNDS[1] -
-                              DIST_FROM_BOUND)
+    if approx == 'no':    
+        if version == '2009':
+            m = array(range (1, N+1)) 
+            y = lambda x: S / N * sum(x ** m) - sum((x ** m) / m)
+            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 1.005, xtol = 1.490116e-08)
+        if version == '2008':
+            y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
+            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, BOUNDS[1] - DIST_FROM_BOUND)
+    else:
+        y = lambda x: x * log(1 / x) - S / N
+        exp_neg_lambda_sad = fsolve(y, BOUNDS[1] - DIST_FROM_BOUND)
+        
     lambda_sad = -1 * log(exp_neg_lambda_sad)
     return lambda_sad
 
@@ -110,3 +129,6 @@ def sar(A_0, S_0, N_0, Amin, Amax):
     
     """
     # This is where we will deal with adding the anchor scale to the results
+S=26
+N=507
+a=get_lambda_sad(S,N)
