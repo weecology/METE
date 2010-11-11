@@ -3,7 +3,8 @@
 from __future__ import division
 from math import log, exp
 from scipy.optimize import bisect, fsolve
-from numpy import array
+from scipy.stats import logser
+from numpy import array, e, empty
 import matplotlib.pyplot as plt
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
@@ -17,14 +18,13 @@ def get_lambda_sad(S, N, approx='no', version='2009'):
     S -- the number of species
     N -- the total number of individuals
     approx -- 'no' uses either 2008-eq. B.4 or 2009-eq. 3, which use minimal approximations
-              'yes' uses eq. 7b which uses an additional approximation (e^-?_1˜1-?_1)
+              'yes' uses eq. 7b which uses an additional approximation (e^-lambda_1~1-lambda_1)
               the default is 'no'; using the default is strongly recommended
               unless there is a very clear reason to do otherwise.
     version -- '2008': Harte et al. 2008 based on eq.(B.4)
                '2009': Harte et al. 2009 based on eq.(3)
                the default is '2009'; using the default is recommended for
                relatively low values of S
-
     
     """
     #TO DO: check to see if 'bisect' can be swapped out for 'fsolve'
@@ -78,6 +78,41 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
         lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
     return lambda_spatialdistrib
 
+def get_mete_sad(S, N):
+    """Use lambda_1 to generate SAD predicted by the METE
+    
+    Keyword arguments:
+    S -- the number of species
+    N -- the total number of individuals
+    
+    """
+    
+    assert S > 1, "S must be greater than 1"
+    assert N > 0, "N must be greater than 0"
+    assert S/N < 1, "N must be greater than S"
+    
+    lambda_sad = get_lambda_sad(S,N)
+    p = e ** -lambda_sad
+    abundance  = list(empty([S]))
+    rank = range(1, S+1)
+    revrank = rank.reverse()
+      
+    if p >= 1:        
+        for i in range(0, S):               
+            n = array(range(1, N + 1))
+            y = lambda x: (sum(p ** array(range(1, x + 1)) / 
+                               array(range(1, x + 1))) / 
+                           sum(p ** n / n) - (rank[i]-0.5) / S)
+            if y(1) > 0:
+                abundance[i] = 1
+            else:
+                abundance[i] = int(round(bisect(y,1,N)))                
+    else:
+        for i in range(0, S): 
+            y = lambda x: logser.cdf(x,p) / logser.cdf(N,p) - (rank[i]-0.5) / S
+            abundance[i] = int(round(bisect(y, 0, N)))
+    return abundance
+
 def downscale_sar(A, S, N, Amin):
     """Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009"""
     lambda_sad = get_lambda_sad(S, N)
@@ -129,6 +164,3 @@ def sar(A_0, S_0, N_0, Amin, Amax):
     
     """
     # This is where we will deal with adding the anchor scale to the results
-S=26
-N=507
-a=get_lambda_sad(S,N)
