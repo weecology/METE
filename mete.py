@@ -137,7 +137,7 @@ def upscale_sar(A, S, N, Amax):
         out = [x[1] / x[0] - 2 * N_A *
                (1 - x[0]) / (x[0] - x[0] ** (2 * N_A + 1)) *
                (1 - x[0] ** (2 * N_A) / (2 * N_A + 1)) - S_A]
-        n = array(range(1, 2 * N_A + 1))
+        n = array(range(1, 2 * N_A + 1)) 
         out.append(x[1] / 2 / N_A * sum(x[0] ** n) - sum(x[0] ** n / n))
         return out
     
@@ -154,7 +154,7 @@ def upscale_sar(A, S, N, Amax):
     N *= 2
     if A >= Amax:
         return ([A], [S])
-    elif S = "NaN":
+    elif S == "NaN":
         return ([A], "NaN")
     else:
         up_scaled_data = upscale_sar(A, S, N, Amax)
