@@ -40,10 +40,12 @@ def get_lambda_sad(S, N, approx='no', version='2009'):
         if version == '2009':
             m = array(range (1, N+1)) 
             y = lambda x: S / N * sum(x ** m) - sum((x ** m) / m)
-            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 1.005, xtol = 1.490116e-08)
+            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 1.005, 
+                                        xtol = 1.490116e-08)
         if version == '2008':
             y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
-            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, BOUNDS[1] - DIST_FROM_BOUND)
+            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
+                                        BOUNDS[1] - DIST_FROM_BOUND)
     else:
         y = lambda x: x * log(1 / x) - S / N
         exp_neg_lambda_sad = fsolve(y, BOUNDS[1] - DIST_FROM_BOUND)
@@ -73,8 +75,8 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
         y = lambda x: 1 / (1 - x ** (n_0 + 1)) * (x / (1 - x) - x ** (n_0 +1) *
                                                   (n_0 + 1 / (1 - x))) - (n_0 * A /
                                                                           A_0)
-        exp_neg_lambda_spatialdistrib = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, BOUNDS[1] -
-                                  DIST_FROM_BOUND)
+        exp_neg_lambda_spatialdistrib = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
+                                               BOUNDS[1] - DIST_FROM_BOUND)
         lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
     return lambda_spatialdistrib
 
@@ -111,7 +113,7 @@ def get_mete_sad(S, N):
         for i in range(0, S): 
             y = lambda x: logser.cdf(x,p) / logser.cdf(N,p) - (rank[i]-0.5) / S
             abundance[i] = int(round(bisect(y, 0, N)))
-    return abundance
+    return (abundance, p)
 
 def downscale_sar(A, S, N, Amin):
     """Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009"""
