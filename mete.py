@@ -171,3 +171,52 @@ def sar(A_0, S_0, N_0, Amin, Amax):
     
     """
     # This is where we will deal with adding the anchor scale to the results
+    
+
+def get_slopes(site_data):
+    """get slopes from various scales, output list of area slope and N/S
+    input data is a list of lists, each list contains [area, mean S, mean N]"""
+    # return a list containing 4 values: area, observed slope, predicted slope, and N/S
+    data = np.array(site_data)    
+    Zvalues = []
+    area = data[:,0]
+    S_values = data[:,1]
+    for a in area:
+        if a * 4 <= max(area): #stop at last area
+            S_down = float(S_values[area == a])
+            S_focal = float(S_values[area == a * 2 ])
+            S_up = S_values[area == a * 4]
+            if S_focal >= 5: #don't calculate if S < 5
+                N_focal = float(data[data[:,0] == (a * 2),2])
+                A_S_list = np.log([[a, a * 2, a * 4], [S_down,S_focal,float(S_up)]])
+                reg_out = stat.linregress(A_S_list[0],A_S_list[1])
+                z_pred = predicted_slope(a * 2, S_focal, N_focal)
+                NS = N_focal / S_focal
+                parameters = [a * 2, reg_out[0], z_pred, NS]
+                Zvalues.append(parameters) 
+            else:
+                continue
+        else:
+            break
+    return Zvalues
+    
+def predicted_slope(A, S, N):
+    """Calculates slope of the predicted line for a given S and N
+    by combining upscaling one level and downscaling one level from 
+    the focal scale, A"""
+    ans_lower = mete.downscale_sar(A, S, N, A/2)
+    if ans_lower[1] != ["NaN"]:
+        S_lower = array(ans_lower[1])
+        ans_upper = mete.upscale_sar(A, S, N, A * 2)
+        if ans_upper[1] == ["NaN"]:
+            print "Error in upscaling. z cannot be computed."
+            return "NaN"
+        else: 
+            S_upper = array(ans_upper[1])
+            return (log(S_upper/S_lower)/2/log(2))
+    else:
+        print "Error in downscaling. Cannot find root."
+        return "NaN"
+    
+
+    
