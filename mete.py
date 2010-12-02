@@ -174,7 +174,10 @@ def sar(A_0, S_0, N_0, Amin, Amax):
 
 def get_slopes(site_data):
     """get slopes from various scales, output list of area slope and N/S
-    input data is a list of lists, each list contains [area, mean S, mean N]"""
+    
+    input data is a list of lists, each list contains [area, mean S, mean N]
+    
+    """
     # return a list containing 4 values: area, observed slope, predicted slope, and N/S
     data = np.array(site_data)    
     Zvalues = []
@@ -201,8 +204,11 @@ def get_slopes(site_data):
     
 def predicted_slope(A, S, N):
     """Calculates slope of the predicted line for a given S and N
+    
     by combining upscaling one level and downscaling one level from 
-    the focal scale, A"""
+    the focal scale, A
+    
+    """
     ans_lower = mete.downscale_sar(A, S, N, A/2)
     if math.isnan(ans_lower[1]) == True:
         S_lower = array(ans_lower[1])
@@ -219,9 +225,12 @@ def predicted_slope(A, S, N):
     
 def plot_universal_curve(slopes_data):
     """plots ln(N/S) x slope for empirical data and MaxEnt predictions. 
+    
     Predictions should look like Harte's universal curve
     input data is a list of lists. Each list contains:
-    [area, empirical slope, predicted slope, N/S]"""
+    [area, empirical slope, predicted slope, N/S]
+    
+    """
     #TO DO: Add argument for axes
     slopes = np.array(slopes_data)
     NS = slopes[:,3]
