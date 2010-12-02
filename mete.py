@@ -205,18 +205,18 @@ def predicted_slope(A, S, N):
     by combining upscaling one level and downscaling one level from 
     the focal scale, A"""
     ans_lower = mete.downscale_sar(A, S, N, A/2)
-    if ans_lower[1] != ["NaN"]:
+    if math.isnan(ans_lower[1]) == True:
         S_lower = array(ans_lower[1])
         ans_upper = mete.upscale_sar(A, S, N, A * 2)
-        if ans_upper[1] == ["NaN"]:
+        if math.isnan(ans_upper[1]) == True:
             print "Error in upscaling. z cannot be computed."
-            return "NaN"
+            return float('nan')
         else: 
             S_upper = array(ans_upper[1])
             return (log(S_upper/S_lower)/2/log(2))
     else:
         print "Error in downscaling. Cannot find root."
-        return "NaN"
+        return float('nan')
     
 
     
