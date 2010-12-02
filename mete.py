@@ -147,7 +147,7 @@ def upscale_sar(A, S, N, Amax):
         x0 = fsolve(equations_for_S_2A, [0.99, S], args=(S, N), full_output = 1)
         S_2A, convergence = x0[0][1], x0[2]
         if convergence != 1:
-            return "NaN"
+            return float('nan')
         else:
             return S_2A
     
@@ -156,8 +156,8 @@ def upscale_sar(A, S, N, Amax):
     N *= 2
     if A >= Amax:
         return ([A], [S])
-    elif S == "NaN":
-        return ([A], "NaN")
+    elif math.isnan(S):
+        return ([A], S)
     else:
         up_scaled_data = upscale_sar(A, S, N, Amax)
         return ([A] + up_scaled_data[0], [S] + up_scaled_data[1])
