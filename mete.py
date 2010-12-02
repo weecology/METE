@@ -170,8 +170,7 @@ def sar(A_0, S_0, N_0, Amin, Amax):
     and/or doubled scales so as to include Amin and Amax.
     
     """
-    # This is where we will deal with adding the anchor scale to the results
-    
+    # This is where we will deal with adding the anchor scale to the results    
 
 def get_slopes(site_data):
     """get slopes from various scales, output list of area slope and N/S
@@ -218,5 +217,21 @@ def predicted_slope(A, S, N):
         print "Error in downscaling. Cannot find root."
         return float('nan')
     
-
+def plot_universal_curve(slopes_data):
+    """plots ln(N/S) x slope for empirical data and MaxEnt predictions. 
+    Predictions should look like Harte's universal curve
+    input data is a list of lists. Each list contains:
+    [area, empirical slope, predicted slope, N/S]"""
+    #TO DO: Add argument for axes
+    slopes = np.array(slopes_data)
+    NS = slopes[:,3]
+    z_pred = slopes[:,2]
+    z_obs = slopes[:,1]
+    #plot Harte's universal curve from predictions with empirical data to analyze fit
+    p.semilogx(NS, z_pred, 'bo')
+    p.xlabel("ln(N/S)")
+    p.ylabel("Slope")
+    p.hold(True)
+    p.semilogx(NS, z_obs, 'ro')
+    p.show()
     
