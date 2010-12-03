@@ -1,7 +1,7 @@
 """Module for fitting and testing Harte et al.'s maximum entropy models"""
 
 from __future__ import division
-from math import log, exp
+from math import log, exp, isnan
 from scipy.optimize import bisect, fsolve
 from scipy.stats import logser
 from numpy import array, e, empty
@@ -208,10 +208,10 @@ def predicted_slope(A, S, N):
     the focal scale, A
     
     """
-    ans_lower = mete.downscale_sar(A, S, N, A/2)
-    if math.isnan(ans_lower[1]) == True:
+    ans_lower = downscale_sar(A, S, N, A/2)
+    if isnan(ans_lower[1]) == False:
         S_lower = array(ans_lower[1])
-        ans_upper = mete.upscale_sar(A, S, N, A * 2)
+        ans_upper = upscale_sar(A, S, N, A * 2)
         if math.isnan(ans_upper[1]) == True:
             print "Error in upscaling. z cannot be computed."
             return float('nan')
@@ -230,15 +230,15 @@ def plot_universal_curve(slopes_data):
     [area, empirical slope, predicted slope, N/S]
     """
     #TO DO: Add argument for axes
-    slopes = np.array(slopes_data)
+    slopes = array(slopes_data)
     NS = slopes[:, 3]
     z_pred = slopes[:, 2]
     z_obs = slopes[:, 1]
     #plot Harte's universal curve from predictions with empirical data to analyze fit
-    p.semilogx(NS, z_pred, 'bo')
-    p.xlabel("ln(N/S)")
-    p.ylabel("Slope")
-    p.hold(True)
-    p.semilogx(NS, z_obs, 'ro')
-    p.show()
+    plt.semilogx(NS, z_pred, 'bo')
+    plt.xlabel("ln(N/S)")
+    plt.ylabel("Slope")
+    plt.hold(True)
+    plt.semilogx(NS, z_obs, 'ro')
+    plt.show()
     
