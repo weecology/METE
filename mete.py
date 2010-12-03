@@ -179,22 +179,21 @@ def get_slopes(site_data):
     
     """
     # return a list containing 4 values: area, observed slope, predicted slope, and N/S
-    data = np.array(site_data)    
+    data = array(site_data)    
     Zvalues = []
-    area = data[:,0]
-    S_values = data[:,1]
+    area = data[:, 0]
+    S_values = data[:, 1]
     for a in area:
         if a * 4 <= max(area): #stop at last area
             S_down = float(S_values[area == a])
             S_focal = float(S_values[area == a * 2 ])
-            S_up = S_values[area == a * 4]
+            S_up = float(S_values[area == a * 4])
             if S_focal >= 5: #don't calculate if S < 5
-                N_focal = float(data[data[:,0] == (a * 2),2])
-                A_S_list = np.log([[a, a * 2, a * 4], [S_down,S_focal,float(S_up)]])
-                reg_out = stat.linregress(A_S_list[0],A_S_list[1])
+                N_focal = float(data[area == a * 2, 2])
                 z_pred = predicted_slope(a * 2, S_focal, N_focal)
+                z_emp = (log(S_up) - log(S_down)) / 2 / log(2)
                 NS = N_focal / S_focal
-                parameters = [a * 2, reg_out[0], z_pred, NS]
+                parameters = [a * 2, z_emp, z_pred, NS]
                 Zvalues.append(parameters) 
             else:
                 continue
@@ -218,7 +217,7 @@ def predicted_slope(A, S, N):
             return float('nan')
         else: 
             S_upper = array(ans_upper[1])
-            return (log(S_upper/S_lower)/2/log(2))
+            return (log(S_upper / S_lower) / 2 / log(2))
     else:
         print "Error in downscaling. Cannot find root."
         return float('nan')
@@ -229,13 +228,12 @@ def plot_universal_curve(slopes_data):
     Predictions should look like Harte's universal curve
     input data is a list of lists. Each list contains:
     [area, empirical slope, predicted slope, N/S]
-    
     """
     #TO DO: Add argument for axes
     slopes = np.array(slopes_data)
-    NS = slopes[:,3]
-    z_pred = slopes[:,2]
-    z_obs = slopes[:,1]
+    NS = slopes[:, 3]
+    z_pred = slopes[:, 2]
+    z_obs = slopes[:, 1]
     #plot Harte's universal curve from predictions with empirical data to analyze fit
     p.semilogx(NS, z_pred, 'bo')
     p.xlabel("ln(N/S)")
