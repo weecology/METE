@@ -209,14 +209,14 @@ def predicted_slope(A, S, N):
     
     """
     ans_lower = downscale_sar(A, S, N, A/2)
-    if isnan(ans_lower[1]) == False:
-        S_lower = array(ans_lower[1])
+    if isnan(ans_lower[1][0]) == False:
+        S_lower = array(ans_lower[1][0])
         ans_upper = upscale_sar(A, S, N, A * 2)
-        if math.isnan(ans_upper[1]) == True:
+        if isnan(ans_upper[1][0]) == True:
             print "Error in upscaling. z cannot be computed."
             return float('nan')
         else: 
-            S_upper = array(ans_upper[1])
+            S_upper = array(ans_upper[1][0])
             return (log(S_upper / S_lower) / 2 / log(2))
     else:
         print "Error in downscaling. Cannot find root."
@@ -241,4 +241,3 @@ def plot_universal_curve(slopes_data):
     plt.hold(True)
     plt.semilogx(NS, z_obs, 'ro')
     plt.show()
-    
