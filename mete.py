@@ -201,17 +201,17 @@ def get_slopes(site_data):
             break
     return Zvalues
     
-def predicted_slope(A, S, N):
+def predicted_slope(S, N):
     """Calculates slope of the predicted line for a given S and N
     
     by combining upscaling one level and downscaling one level from 
-    the focal scale, A
+    the focal scale
     
     """
-    ans_lower = downscale_sar(A, S, N, A/2)
+    ans_lower = downscale_sar(2, S, N, 1)
     if isnan(ans_lower[1][0]) == False:
         S_lower = array(ans_lower[1][0])
-        ans_upper = upscale_sar(A, S, N, A * 2)
+        ans_upper = upscale_sar(2, S, N, 4)
         if isnan(ans_upper[1][0]) == True:
             print "Error in upscaling. z cannot be computed."
             return float('nan')
