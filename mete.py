@@ -142,7 +142,7 @@ def upscale_sar(A, S, N, Amax):
         return out
     
     def solve_for_S_2A(S, N):
-        x_A = exp(-get_lambda_sad(S, N))
+        x_A = exp(-get_lambda_sad(1.5 * S, 2 * N))
         x0 = fsolve(equations_for_S_2A, [x_A, S], args=(S, N), full_output = 1)
         S_2A, convergence = x0[0][1], x0[2]
         if convergence != 1:
@@ -227,6 +227,7 @@ def plot_universal_curve(slopes_data):
     Predictions should look like Harte's universal curve
     input data is a list of lists. Each list contains:
     [area, empirical slope, predicted slope, N/S]
+    
     """
     #TO DO: Add argument for axes
     slopes = array(slopes_data)
