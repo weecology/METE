@@ -155,7 +155,7 @@ def upscale_sar(A, S, N, Amax):
     N *= 2
     if A >= Amax:
         return ([A], [S])
-    elif math.isnan(S):
+    elif isnan(S):
         return ([A], S)
     else:
         up_scaled_data = upscale_sar(A, S, N, Amax)
