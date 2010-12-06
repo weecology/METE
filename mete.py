@@ -130,8 +130,6 @@ def downscale_sar(A, S, N, Amin):
 
 def upscale_sar(A, S, N, Amax):
     """Predictions for upscaled SAR using Eqs. 8 and 9 from Harte et al. 2009"""
-    #TO DO: Swap out arbitrary 0.99 starting value for estimate at A using
-    #       get_lambda_sad
     def equations_for_S_2A(x, S_A, N_A):
         """Implicit equations for S(2A) given S(A) and N(A)"""
         # TO DO: make this clearer by separating equations and then putting them
@@ -144,7 +142,8 @@ def upscale_sar(A, S, N, Amax):
         return out
     
     def solve_for_S_2A(S, N):
-        x0 = fsolve(equations_for_S_2A, [0.99, S], args=(S, N), full_output = 1)
+        x_A = exp(-get_lambda_sad(S, N))
+        x0 = fsolve(equations_for_S_2A, [x_A, S], args=(S, N), full_output = 1)
         S_2A, convergence = x0[0][1], x0[2]
         if convergence != 1:
             return float('nan')
@@ -172,35 +171,6 @@ def sar(A_0, S_0, N_0, Amin, Amax):
     """
     # This is where we will deal with adding the anchor scale to the results    
 
-def get_slopes(site_data):
-    """get slopes from various scales, output list of area slope and N/S
-    
-    input data is a list of lists, each list contains [area, mean S, mean N]
-    
-    """
-    # return a list containing 4 values: area, observed slope, predicted slope, and N/S
-    data = array(site_data)    
-    Zvalues = []
-    area = data[:, 0]
-    S_values = data[:, 1]
-    for a in area:
-        if a * 4 <= max(area): #stop at last area
-            S_down = float(S_values[area == a])
-            S_focal = float(S_values[area == a * 2 ])
-            S_up = float(S_values[area == a * 4])
-            if S_focal >= 5: #don't calculate if S < 5
-                N_focal = float(data[area == a * 2, 2])
-                z_pred = predicted_slope(a * 2, S_focal, N_focal)
-                z_emp = (log(S_up) - log(S_down)) / 2 / log(2)
-                NS = N_focal / S_focal
-                parameters = [a * 2, z_emp, z_pred, NS]
-                Zvalues.append(parameters) 
-            else:
-                continue
-        else:
-            break
-    return Zvalues
-    
 def predicted_slope(S, N):
     """Calculates slope of the predicted line for a given S and N
     
@@ -221,6 +191,35 @@ def predicted_slope(S, N):
     else:
         print "Error in downscaling. Cannot find root."
         return float('nan')
+    
+def get_slopes(site_data):
+    """get slopes from various scales, output list of area slope and N/S
+    
+    input data is a list of lists, each list contains [area, mean S, mean N]
+    
+    """
+    # return a list containing 4 values: area, observed slope, predicted slope, and N/S
+    data = array(site_data)    
+    Zvalues = []
+    area = data[:, 0]
+    S_values = data[:, 1]
+    for a in area:
+        if a * 4 <= max(area): #stop at last area
+            S_down = float(S_values[area == a])
+            S_focal = float(S_values[area == a * 2 ])
+            S_up = float(S_values[area == a * 4])
+            if S_focal >= 5: #don't calculate if S < 5
+                N_focal = float(data[area == a * 2, 2])
+                z_pred = predicted_slope(S_focal, N_focal)
+                z_emp = (log(S_up) - log(S_down)) / 2 / log(2)
+                NS = N_focal / S_focal
+                parameters = [a * 2, z_emp, z_pred, NS]
+                Zvalues.append(parameters) 
+            else:
+                continue
+        else:
+            break
+    return Zvalues    
     
 def plot_universal_curve(slopes_data):
     """plots ln(N/S) x slope for empirical data and MaxEnt predictions. 
