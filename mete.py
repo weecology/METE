@@ -81,12 +81,13 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
         lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
     return lambda_spatialdistrib
 
-def get_mete_sad(S, N):
+def get_mete_sad(S, N, lambda_sad = None):
     """Use lambda_1 to generate SAD predicted by the METE
     
     Keyword arguments:
     S -- the number of species
     N -- the total number of individuals
+    lambda_sad -- allows input of lambda by user if it has already been calculated
     
     """
     
@@ -94,7 +95,8 @@ def get_mete_sad(S, N):
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
     
-    lambda_sad = get_lambda_sad(S,N)
+    if lambda_sad is None:
+        lambda_sad = get_lambda_sad(S,N)
     p = e ** -lambda_sad
     abundance  = list(empty([S]))
     rank = range(1, S+1)
