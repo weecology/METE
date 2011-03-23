@@ -100,7 +100,7 @@ def get_mete_sad(S, N, lambda_sad = None):
     p = e ** -lambda_sad
     abundance  = list(empty([S]))
     rank = range(1, S+1)
-    revrank = rank.reverse()
+    rank.reverse()
       
     if p >= 1:        
         for i in range(0, S):               
