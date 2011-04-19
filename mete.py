@@ -3,7 +3,7 @@
 from __future__ import division
 from math import log, exp, isnan, floor, ceil
 from scipy.optimize import bisect, fsolve
-from scipy.stats import logser
+from scipy.stats import logser, geom
 from numpy.random import random_integers
 from numpy import array, e, empty
 import matplotlib.pyplot as plt
@@ -116,6 +116,28 @@ def get_mete_sad(S, N, lambda_sad = None):
         for i in range(0, S): 
             y = lambda x: logser.cdf(x,p) / logser.cdf(N,p) - (rank[i]-0.5) / S
             abundance[i] = int(round(bisect(y, 0, N)))
+    return (abundance, p)
+
+def get_mete_sad_geom(S, N):
+    """METE's predicted RAD when the only constraint is N/S
+    
+    Keyword arguments:
+    S -- the number of species
+    N -- the total number of individuals
+    """
+    
+    assert S > 1, "S must be greater than 1"
+    assert N > 0, "N must be greater than 0"
+    assert S/N < 1, "N must be greater than S"
+    
+    p = S / N
+    abundance  = list(empty([S]))
+    rank = range(1, S+1)
+    rank.reverse()
+                   
+    for i in range(0, S): 
+        y = lambda x: geom.cdf(x,p) / geom.cdf(N,p) - (rank[i]-0.5) / S
+        abundance[i] = int(round(bisect(y, 0, N)))
     return (abundance, p)
 
 def downscale_sar(A, S, N, Amin):
