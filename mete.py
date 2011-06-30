@@ -54,6 +54,16 @@ def get_lambda_sad(S, N, approx='no', version='2009'):
     lambda_sad = -1 * log(exp_neg_lambda_sad)
     return lambda_sad
 
+def get_mete_sad(N_0, S_0, lambda_sad = None):
+    """Get the expected number of species with each abundance"""
+    if lambda_sad == None:
+        lambda_sad = get_lambda_sad(S_0, N_0)
+    p = exp(-lambda_sad)
+    raw_pmf = logser.pmf(range(1, N_0 + 1), p)
+    truncated_pmf = raw_pmf / sum(raw_pmf)
+    predicted_sad = truncated_pmf * S_0
+    return predicted_sad
+
 def get_lambda_spatialdistrib(A, A_0, n_0):
     """Solve for lambda_P from Harte et al. 2008
     
@@ -81,7 +91,7 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
         lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
     return lambda_spatialdistrib
 
-def get_mete_sad(S, N, lambda_sad = None):
+def get_mete_rad(S, N, lambda_sad = None):
     """Use lambda_1 to generate SAD predicted by the METE
     
     Keyword arguments:
@@ -295,7 +305,7 @@ def sim_spatial_whole(S, N, bisec):
     Note: bisection number 1 corresponds to no bisection (whole plot). 
     
     """
-    abd_pred = get_mete_sad(S, N)[0]
+    abd_pred = get_mete_rad(S, N)[0]
     abd_prev = [[1, 1, array(abd_pred)]]
     bisec_num = 1
     while bisec_num < bisec: 
