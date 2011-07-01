@@ -1,5 +1,8 @@
 """Module for fitting and testing Harte et al.'s maximum entropy models"""
 
+#TO DO: check to see if lambda is actually beta in Harte 2011 and if so
+#       modify variable names throughout
+
 from __future__ import division
 from math import log, exp, isnan, floor, ceil
 from scipy.optimize import bisect, fsolve
@@ -28,8 +31,6 @@ def get_lambda_sad(S, N, approx='no', version='2009'):
                relatively low values of S
     
     """
-    #TO DO: check to see if 'bisect' can be swapped out for 'fsolve'
-    
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
@@ -54,13 +55,18 @@ def get_lambda_sad(S, N, approx='no', version='2009'):
     lambda_sad = -1 * log(exp_neg_lambda_sad)
     return lambda_sad
 
-def get_mete_sad(N_0, S_0, lambda_sad = None):
-    """Get the expected number of species with each abundance"""
+def get_mete_pmf(S_0, N_0, lambda_sad = None):
+    """Get the truncated log-series PMF predicted by METE"""
     if lambda_sad == None:
         lambda_sad = get_lambda_sad(S_0, N_0)
     p = exp(-lambda_sad)
     raw_pmf = logser.pmf(range(1, N_0 + 1), p)
     truncated_pmf = raw_pmf / sum(raw_pmf)
+    return truncated_pmf
+
+def get_mete_sad(S_0, N_0, lambda_sad=None, preston=0):
+    """Get the expected number of species with each abundance"""
+    pmf = get_mete_pmf(S_0, N_0, lambda_sad)
     predicted_sad = truncated_pmf * S_0
     return predicted_sad
 
