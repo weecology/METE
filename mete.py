@@ -1,7 +1,9 @@
 """Module for fitting and testing Harte et al.'s maximum entropy models"""
 
-#TO DO: check to see if lambda is actually beta in Harte 2011 and if so
-#       modify variable names throughout
+#TODO: 1.check to see if lambda is actually beta in Harte 2011 and if so
+#        modify variable names throughout
+#      2.transition to 'import numpy as np'
+
 
 from __future__ import division
 from math import log, exp, isnan, floor, ceil
@@ -64,12 +66,28 @@ def get_mete_pmf(S_0, N_0, lambda_sad = None):
     truncated_pmf = raw_pmf / sum(raw_pmf)
     return truncated_pmf
 
-def get_mete_sad(S_0, N_0, lambda_sad=None, preston=0):
-    """Get the expected number of species with each abundance"""
+def get_mete_sad(S_0, N_0, lambda_sad=None, bin_edges=None):
+    """Get the expected number of species with each abundance
+    
+    If no value is provided for lambda_sad it will be solved for using S_0 & N_0
+    If bin_edges is not provided then the values returned are the estimated
+        number of species for each integer value from 1 to N_0
+    If bin_edges is provided it should be an array of bin edges including the
+        bottom and top edges. The last value in bin_edge should be > N_0
+    
+    """
     pmf = get_mete_pmf(S_0, N_0, lambda_sad)
-    predicted_sad = truncated_pmf * S_0
+    if bin_edges != None:
+        N = array(range(1, N_0 + 1))
+        binned_pmf = []
+        for edge in range(0, len(bin_edges) - 1):
+            bin_probability = sum(pmf[(N >= bin_edges[edge]) &
+                                      (N < bin_edges[edge + 1])])
+            binned_pmf.append(bin_probability)
+        pmf = array(binned_pmf)
+    predicted_sad = S_0 * pmf
     return predicted_sad
-
+            
 def get_lambda_spatialdistrib(A, A_0, n_0):
     """Solve for lambda_P from Harte et al. 2008
     
