@@ -12,6 +12,8 @@ from scipy.stats import logser, geom
 from numpy.random import random_integers
 from numpy import array, e, empty
 import matplotlib.pyplot as plt
+import os.path
+import cPickle
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
@@ -56,6 +58,19 @@ def get_lambda_sad(S, N, approx='no', version='2009'):
         
     lambda_sad = -1 * log(exp_neg_lambda_sad)
     return lambda_sad
+
+def get_lambda_dict(filename='lambda_library.pck'):
+    """Check if lookup dictionary for lamba exists. If not, create an empty one."""
+    if os.path.exists(filename):
+        dict_file = open(filename, 'r')
+        dict_lambda = cPickle.load(dict_file)
+        dict_file.close()
+    else:
+        dict_file = open(filename, 'w')
+        dict_lambda = {}
+        cPickle.dump(dict_lambda, dict_file)
+        dict_file.close()
+    return dict_lambda
 
 def get_mete_pmf(S_0, N_0, lambda_sad = None):
     """Get the truncated log-series PMF predicted by METE"""
