@@ -72,6 +72,30 @@ def get_lambda_dict(filename='lambda_library.pck'):
         dict_file.close()
     return dict_lambda
 
+def save_lambda_dict(lambda_dictionary, filename='lambda_library.pck'):
+    """Save the current lambda lookup table to a file"""
+    dic_output = open(filename, 'w')
+    cPickle.dump(lambda_dictionary, dic_output)
+    dic_output.close()
+
+def build_lambda_dict(S_start, S_end, N_max, N_min=1, filename='lambda_library.pck'):
+    """Add values to the lookup table for beta
+    
+    Starting at S_start and finishing at S_end this function will take values
+    of N from S + 1 to N_max, determine if a value of beta is already in the 
+    lookup table for the current value of N/S, and if not then calculate the
+    value of beta and add it to the dictionary
+    
+    """
+    lambda_dictionary = get_lambda_dict(filename)
+    for S in range(S_start, S_end + 1):
+        N_start = max(S + 1, N_min)
+        for N in range(N_start, N_max):
+            N_over_S = N / S
+            if N_over_S not in lambda_dictionary:
+                lambda_dictionary[N_over_S] = get_lambda_sad(S, N)
+    save_lambda_dict(lambda_dictionary, filename)
+
 def get_mete_pmf(S_0, N_0, lambda_sad = None):
     """Get the truncated log-series PMF predicted by METE"""
     if lambda_sad == None:
