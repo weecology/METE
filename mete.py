@@ -390,10 +390,12 @@ def sim_spatial_whole(S, N, bisec):
         bisec_num += 1
     return abd_prev
 
-def sim_spatial_ncomms(S, N, bisec, n_comms = 1):
-    """Simulates species abundances for n communities across all cells given S & N at whole plot level and bisection number. 
+def sim_spatial_ncomm(S, N, bisec, ncomm = 1):
+    """Simulates species abundances for n communities across all cells
+    given S & N at whole plot level and bisection number. 
 
-    Output: a list of lists.  The default behavior is to only generate 1 community but more communities can be generated in which case the 
+    Output: a list of lists.  The default behavior is to only generate 1
+    community but more communities can be generated in which case the 
     output is a 3-dimensional array indexed by [community #][quadrat #][species #]
 
     Note: bisection number 1 corresponds to no bisection (whole plot).
@@ -401,7 +403,7 @@ def sim_spatial_ncomms(S, N, bisec, n_comms = 1):
     """
     comm = []    
     i_comm = 1
-    while(i_comm <= n_comms):
+    while(i_comm <= ncomm):
         comm.append(sim_spatial_whole(S, N, bisec))
         i_comm +=1
     return comm
