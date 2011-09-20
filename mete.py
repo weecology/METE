@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import os.path
 import cPickle
 import numpy as np
+import macroeco_distributions
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
@@ -107,8 +108,7 @@ def get_mete_pmf(S_0, N_0, lambda_sad = None):
     if lambda_sad == None:
         lambda_sad = get_lambda_sad(S_0, N_0)
     p = exp(-lambda_sad)
-    raw_pmf = logser.pmf(range(1, N_0 + 1), p)
-    truncated_pmf = raw_pmf / sum(raw_pmf)
+    truncated_pmf = macroeco_distributions.trunc_logser_pmf(range(1, N_0 + 1), p, N_0)
     return truncated_pmf
 
 def get_mete_sad(S_0, N_0, lambda_sad=None, bin_edges=None):
