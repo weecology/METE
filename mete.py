@@ -14,12 +14,13 @@ from numpy import array, e, empty
 import matplotlib.pyplot as plt
 import os.path
 import cPickle
+import numpy as np
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
 DIST_FROM_BOUND = 10 ** -15
 
-def get_lambda_sad(S, N, approx='no', version='2009'):
+def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
     """Solve for lambda_1 
         
     Keyword arguments:
@@ -44,10 +45,15 @@ def get_lambda_sad(S, N, approx='no', version='2009'):
     # Solve for lambda_sad using the substitution x = e**-lambda_1
     if approx == 'no':    
         if version == '2009':
-            m = array(range (1, N+1)) 
-            y = lambda x: S / N * sum(x ** m) - sum((x ** m) / m)
-            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 1.005, 
-                                        xtol = 1.490116e-08)
+            if len(lambda_dict) == 0:
+                lambda_dict = get_lambda_dict()
+            if N / S in lambda_dict:
+                return lambda_dict[N / S]
+            else:
+                m = array(range (1, N+1)) 
+                y = lambda x: S / N * sum(x ** m) - sum((x ** m) / m)
+                exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
+                                            1.005, xtol = 1.490116e-08)
         if version == '2008':
             y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
             exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
@@ -154,7 +160,7 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
         lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
     return lambda_spatialdistrib
 
-def get_mete_rad(S, N, lambda_sad = None):
+def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
     """Use lambda_1 to generate SAD predicted by the METE
     
     Keyword arguments:
@@ -169,7 +175,7 @@ def get_mete_rad(S, N, lambda_sad = None):
     assert S/N < 1, "N must be greater than S"
     
     if lambda_sad is None:
-        lambda_sad = get_lambda_sad(S,N)
+        lambda_sad = get_lambda_sad(S, N, lambda_dict=lambda_dict)
     p = e ** -lambda_sad
     abundance  = list(empty([S]))
     rank = range(1, S+1)
