@@ -46,8 +46,6 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
     # Solve for lambda_sad using the substitution x = e**-lambda_1
     if approx == 'no':    
         if version == '2009':
-            if len(lambda_dict) == 0:
-                lambda_dict = get_lambda_dict()
             if N / S in lambda_dict:
                 return lambda_dict[N / S]
             else:
