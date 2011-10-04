@@ -173,7 +173,10 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
     assert S/N < 1, "N must be greater than S"
     
     if lambda_sad is None:
-        lambda_sad = get_lambda_sad(S, N, lambda_dict=lambda_dict)
+        if (float(S) / float(N)) < 0.001:
+            lambda_sad = get_lambda_sad(S, N, version = '2008', lambda_dict=lambda_dict)
+        else:
+            lambda_sad = get_lambda_sad(S, N, version = '2009', lambda_dict=lambda_dict)
     p = e ** -lambda_sad
     abundance  = list(empty([S]))
     rank = range(1, S+1)
@@ -373,7 +376,7 @@ def sim_spatial_whole(S, N, bisec):
     Note: bisection number 1 corresponds to no bisection (whole plot). 
     
     """
-    abd_pred = get_mete_rad(S, N)[0]
+    abd_pred = get_mete_rad(S, N, )[0]
     abd_prev = [[1, 1, array(abd_pred)]]
     bisec_num = 1
     while bisec_num < bisec: 
