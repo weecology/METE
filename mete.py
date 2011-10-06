@@ -1,7 +1,6 @@
 """Module for fitting and testing Harte et al.'s maximum entropy models"""
 
-#TODO: 1.check to see if lambda is actually beta in Harte 2011 and if so
-#        modify variable names throughout
+#TODO: 1.modifying naming conventions to match Harte 2011
 #      2.transition to 'import numpy as np'
 
 
@@ -37,6 +36,10 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
                relatively low values of S
     
     """
+    
+    #TODO: Figure out if we can set the upper bound for bisect logically based
+    #      on precision limits related to N, and/or set defaults for falling
+    #      back to approximations when values of N are large
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
@@ -168,6 +171,11 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
     
     """
     
+    #TODO: Explore the errors from this code when S<<N (~1/1000)
+    #      Report is "range() integer end argument expected, got float." which
+    #      which probably results from the current value of x in bisect being
+    #      non-integer. Needs to be replaced with an integer version, but we
+    #      need to figure out the proper way to do that (round, floor, ceil??)
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
