@@ -13,6 +13,7 @@ from numpy import array, e, empty
 import matplotlib.pyplot as plt
 import os.path
 import cPickle
+import sys
 import numpy as np
 import macroeco_distributions
 
@@ -37,8 +38,7 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
     
     """
     
-    #TODO: Figure out if we can set the upper bound for bisect logically based
-    #      on precision limits related to N, and/or set defaults for falling
+    #TODO: Figure out if we can set defaults for falling
     #      back to approximations when values of N are large
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
@@ -53,9 +53,9 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
                 return lambda_dict[N / S]
             else:
                 m = array(range (1, N+1)) 
-                y = lambda x: S / N * sum(x ** m) - sum((x ** m) / m)
+                y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
                 exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
-                                            1.005, xtol = 1.490116e-08)
+                                        sys.float_info[0] ** (1 / N), xtol = 1.490116e-08)
         if version == '2008':
             y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
             exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
