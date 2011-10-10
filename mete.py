@@ -55,7 +55,7 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
                 m = array(range (1, N+1)) 
                 y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
                 exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
-                                        min(sys.float_info[0] ** (1 / N), 2), xtol = 1.490116e-08)
+                                        min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
         if version == '2008':
             y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
             exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
