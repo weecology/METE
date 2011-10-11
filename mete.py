@@ -171,20 +171,12 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
     
     """
     
-    #TODO: Explore the errors from this code when S<<N (~1/1000)
-    #      Report is "range() integer end argument expected, got float." which
-    #      which probably results from the current value of x in bisect being
-    #      non-integer. Needs to be replaced with an integer version, but we
-    #      need to figure out the proper way to do that (round, floor, ceil??)
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
     
     if lambda_sad is None:
-        if (float(S) / float(N)) < 0.001:
-            lambda_sad = get_lambda_sad(S, N, version = '2008', lambda_dict=lambda_dict)
-        else:
-            lambda_sad = get_lambda_sad(S, N, version = '2009', lambda_dict=lambda_dict)
+        lambda_sad = get_lambda_sad(S, N, version = '2009', lambda_dict=lambda_dict)
     p = e ** -lambda_sad
     abundance  = list(empty([S]))
     rank = range(1, S+1)
@@ -192,10 +184,7 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
       
     if p >= 1:        
         for i in range(0, S):               
-            n = array(range(1, N + 1))
-            y = lambda x: (sum(p ** array(range(1, x + 1)) / 
-                               array(range(1, x + 1))) / 
-                           sum(p ** n / n) - (rank[i]-0.5) / S)
+            y = lambda x: macroeco_distributions.trunc_logser_cdf(x, p, N) - (rank[i]-0.5) / S
             if y(1) > 0:
                 abundance[i] = 1
             else:
