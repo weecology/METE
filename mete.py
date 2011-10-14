@@ -52,7 +52,7 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
             if N / S in lambda_dict:
                 return lambda_dict[N / S]
             else:
-                m = array(range (1, N+1)) 
+                m = array(range(1, int(N)+1)) 
                 y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
                 exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
                                         min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
@@ -109,7 +109,7 @@ def get_mete_pmf(S_0, N_0, lambda_sad = None):
     if lambda_sad == None:
         lambda_sad = get_lambda_sad(S_0, N_0)
     p = exp(-lambda_sad)
-    truncated_pmf = macroeco_distributions.trunc_logser_pmf(range(1, N_0 + 1), p, N_0)
+    truncated_pmf = macroeco_distributions.trunc_logser_pmf(range(1, int(N_0) + 1), p, N_0)
     return truncated_pmf
 
 def get_mete_sad(S_0, N_0, lambda_sad=None, bin_edges=None):
@@ -124,7 +124,7 @@ def get_mete_sad(S_0, N_0, lambda_sad=None, bin_edges=None):
     """
     pmf = get_mete_pmf(S_0, N_0, lambda_sad)
     if bin_edges != None:
-        N = array(range(1, N_0 + 1))
+        N = array(range(1, int(N_0) + 1))
         binned_pmf = []
         for edge in range(0, len(bin_edges) - 1):
             bin_probability = sum(pmf[(N >= bin_edges[edge]) &
@@ -179,18 +179,18 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
         lambda_sad = get_lambda_sad(S, N, version = '2009', lambda_dict=lambda_dict)
     p = e ** -lambda_sad
     abundance  = list(empty([S]))
-    rank = range(1, S+1)
+    rank = range(1, int(S)+1)
     rank.reverse()
       
     if p >= 1:        
-        for i in range(0, S):               
+        for i in range(0, int(S)):               
             y = lambda x: macroeco_distributions.trunc_logser_cdf(x, p, N) - (rank[i]-0.5) / S
             if y(1) > 0:
                 abundance[i] = 1
             else:
                 abundance[i] = int(round(bisect(y,1,N)))                
     else:
-        for i in range(0, S): 
+        for i in range(0, int(S)): 
             y = lambda x: logser.cdf(x,p) / logser.cdf(N,p) - (rank[i]-0.5) / S
             abundance[i] = int(round(bisect(y, 0, N)))
     return (abundance, p)
@@ -209,10 +209,10 @@ def get_mete_sad_geom(S, N):
     
     p = S / N
     abundance  = list(empty([S]))
-    rank = range(1, S+1)
+    rank = range(1, int(S)+1)
     rank.reverse()
                    
-    for i in range(0, S): 
+    for i in range(0, int(S)): 
         y = lambda x: geom.cdf(x,p) / geom.cdf(N,p) - (rank[i]-0.5) / S
         abundance[i] = int(round(bisect(y, 0, N)))
     return (abundance, p)
@@ -239,7 +239,7 @@ def upscale_sar(A, S, N, Amax):
         out = [x[1] / x[0] - 2 * N_A *
                (1 - x[0]) / (x[0] - x[0] ** (2 * N_A + 1)) *
                (1 - x[0] ** (2 * N_A) / (2 * N_A + 1)) - S_A]
-        n = array(range(1, 2 * N_A + 1)) 
+        n = array(range(1, int(2 * N_A + 1))) 
         out.append(x[1] / 2 / N_A * sum(x[0] ** n) - sum(x[0] ** n / n))
         return out
     
