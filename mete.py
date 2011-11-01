@@ -15,11 +15,24 @@ import os.path
 import cPickle
 import sys
 import numpy as np
-import macroeco_distributions
 
 # Set the distance from the undefined boundaries of the Lagrangian multipliers
 # to set the upper and lower boundaries for the numerical root finders
 DIST_FROM_BOUND = 10 ** -15
+
+def trunc_logser_pmf(x, p, upper_bound):
+    """Probability mass function for the upper truncated log-series"""
+    x = np.array(x)
+    ivals = np.arange(1, upper_bound + 1)
+    normalization = sum(p ** ivals / ivals)
+    pmf = (p ** x / x) / normalization
+    return pmf
+
+def trunc_logser_cdf(x_max, p, upper_bound):
+    """Cumulative probability function for the upper truncated log-series"""
+    x_list = range(1, floor(x_max) + 1)
+    cdf = sum(trunc_logser_pmf(x_list, p, upper_bound))
+    return cdf
 
 def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
     """Solve for lambda_1 
@@ -109,7 +122,7 @@ def get_mete_pmf(S_0, N_0, lambda_sad = None):
     if lambda_sad == None:
         lambda_sad = get_lambda_sad(S_0, N_0)
     p = exp(-lambda_sad)
-    truncated_pmf = macroeco_distributions.trunc_logser_pmf(range(1, int(N_0) + 1), p, N_0)
+    truncated_pmf = trunc_logser_pmf(range(1, int(N_0) + 1), p, N_0)
     return truncated_pmf
 
 def get_mete_sad(S_0, N_0, lambda_sad=None, bin_edges=None):
@@ -184,7 +197,7 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
       
     if p >= 1:        
         for i in range(0, int(S)):               
-            y = lambda x: macroeco_distributions.trunc_logser_cdf(x, p, N) - (rank[i]-0.5) / S
+            y = lambda x: trunc_logser_cdf(x, p, N) - (rank[i]-0.5) / S
             if y(1) > 0:
                 abundance[i] = 1
             else:
