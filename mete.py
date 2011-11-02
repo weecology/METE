@@ -16,10 +16,6 @@ import cPickle
 import sys
 import numpy as np
 
-# Set the distance from the undefined boundaries of the Lagrangian multipliers
-# to set the upper and lower boundaries for the numerical root finders
-DIST_FROM_BOUND = 10 ** -15
-
 def trunc_logser_pmf(x, p, upper_bound):
     """Probability mass function for the upper truncated log-series"""
     x = np.array(x)
@@ -57,7 +53,10 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
     
+    # Set the distance from the undefined boundaries of the Lagrangian multipliers
+    # to set the upper and lower boundaries for the numerical root finders
     BOUNDS = [0, 1]
+    DIST_FROM_BOUND = 10 ** -15
     
     # Solve for lambda_sad using the substitution x = e**-lambda_1
     if approx == 'no':    
@@ -160,12 +159,16 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
     assert A > 0 and A_0 > 0, "A and A_0 must be greater than 0"
     assert A <= A_0, "A must be less than or equal to A_0"
     
+    # Set the distance from the undefined boundaries of the Lagrangian multipliers
+    # to set the upper and lower boundaries for the numerical root finders
+    BOUNDS = [0, 1]
+    DIST_FROM_BOUND = 10 ** -15
+    
     if A == A_0 / 2:
         # Special case where A = A_0/2 from Harte et al. 2009 after eq. 6
         lambda_spatialdistrib = 0
     else:
         # Solve for lambda_P using the substitution x = e**-lambda_P
-        BOUNDS = [0, 1]
         y = lambda x: 1 / (1 - x ** (n_0 + 1)) * (x / (1 - x) - x ** (n_0 +1) *
                                                   (n_0 + 1 / (1 - x))) - (n_0 * A /
                                                                           A_0)
