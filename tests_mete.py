@@ -11,7 +11,7 @@ def test_get_lambda_sad():
     The table of test values is structured as S0, N0, Beta
     
     """
-    data = [[4, 8, '0.0459'],
+    data = [[4, 16, '0.0459'],
             [4, 64, '-0.00884'],
             [4, 1024, '-0.00161'],
             [4, 16384, '-0.000135'],
