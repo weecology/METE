@@ -30,28 +30,34 @@ def trunc_logser_cdf(x_max, p, upper_bound):
     cdf = sum(trunc_logser_pmf(x_list, p, upper_bound))
     return cdf
 
-def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
-    """Solve for lambda_1 
+def get_lambda_sad(S, N, version='precise', lambda_dict={}):
+    """Solve for Beta, the sum of the two Lagrange multipliers for R(n, epsilon)
         
     Keyword arguments:
     S -- the number of species
     N -- the total number of individuals
-    approx -- 'no' uses either 2008-eq. B.4 or 2009-eq. 3, which use minimal approximations
-              'yes' uses eq. 7b which uses an additional approximation (e^-lambda_1~1-lambda_1)
-              the default is 'no'; using the default is strongly recommended
-              unless there is a very clear reason to do otherwise.
-    version -- '2008': Harte et al. 2008 based on eq.(B.4)
-               '2009': Harte et al. 2009 based on eq.(3)
-               the default is '2009'; using the default is recommended for
-               relatively low values of S
-    
+    version -- 'precise':     uses equation 7.27 from Harte 2011, which uses minimal
+                              approximations and includes upper trunction of the
+                              distribution at N_0
+               'untruncated': uses equation B.4 from Harte et al. 2008, which
+                              uses minimal approximations, but assumes that the
+                              distribution of n goes to infinity
+               'approx':      uses equation 7.30 from Harte 2011, which makes more
+                              approximations, but will run substantially faster,
+                              especially for large N
+               the default is 'precise'; using the default is recommended unless
+               there is a good reason to do otherwise.
+    lambda_dict -- optionally pass in a dictionary of lambda values so that
+                   lambda can be looked up rather than solved numerically. This
+                   can substantially speed up execution and is highly
+                   recommended if large numbers of calculations are being
+                   conducted.
     """
     
-    #TODO: Figure out if we can set defaults for falling
-    #      back to approximations when values of N are large
     assert S > 1, "S must be greater than 1"
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
+    assert version in ('precise', 'untruncated', 'approx'), "Unknown version provided"
     
     # Set the distance from the undefined boundaries of the Lagrangian multipliers
     # to set the upper and lower boundaries for the numerical root finders
@@ -59,23 +65,22 @@ def get_lambda_sad(S, N, approx='no', version='2009', lambda_dict={}):
     DIST_FROM_BOUND = 10 ** -15
     
     # Solve for lambda_sad using the substitution x = e**-lambda_1
-    if approx == 'no':    
-        if version == '2009':
-            if N / S in lambda_dict:
-                return lambda_dict[N / S]
-            else:
-                m = array(range(1, int(N)+1)) 
-                y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
-                exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
-                                        min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
-        if version == '2008':
-            y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
-            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
-                                        BOUNDS[1] - DIST_FROM_BOUND)
-    else:
+    if version == 'precise':    
+        if N / S in lambda_dict:
+            return lambda_dict[N / S]
+        else:
+            m = array(range(1, int(N)+1)) 
+            y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
+            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
+                                    min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
+    elif version == 'untruncated':
+        y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
+        exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
+                                    BOUNDS[1] - DIST_FROM_BOUND)
+    elif version == 'approx':
         y = lambda x: x * log(1 / x) - S / N
-        exp_neg_lambda_sad = fsolve(y, BOUNDS[1] - DIST_FROM_BOUND)
-        
+        exp_neg_lambda_sad = fsolve(y, BOUNDS[1] - DIST_FROM_BOUND)            
+            
     lambda_sad = -1 * log(exp_neg_lambda_sad)
     return lambda_sad
 
@@ -192,7 +197,7 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
     assert S/N < 1, "N must be greater than S"
     
     if lambda_sad is None:
-        lambda_sad = get_lambda_sad(S, N, version = '2009', lambda_dict=lambda_dict)
+        lambda_sad = get_lambda_sad(S, N, lambda_dict=lambda_dict)
     p = e ** -lambda_sad
     abundance  = list(empty([S]))
     rank = range(1, int(S)+1)
