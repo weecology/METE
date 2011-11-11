@@ -439,5 +439,3 @@ def sim_spatial_whole_iter(S, N, bisec, coords, n_iter = 10000):
             i += 1
         S_avg = sum(S_list) / len(S_list)
         return S_avg
-
-
