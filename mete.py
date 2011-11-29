@@ -36,22 +36,22 @@ def get_lambda_sad(S, N, version='precise', lambda_dict={}):
     Keyword arguments:
     S -- the number of species
     N -- the total number of individuals
-    version -- 'precise':     uses equation 7.27 from Harte 2011, which uses minimal
-                              approximations and includes upper trunction of the
-                              distribution at N_0
+    version -- 'precise':     uses equation 7.27 from Harte 2011, which uses
+                              minimal approximations and includes upper
+                              trunction of the distribution at N_0
                'untruncated': uses equation B.4 from Harte et al. 2008, which
                               uses minimal approximations, but assumes that the
                               distribution of n goes to infinity
-               'approx':      uses equation 7.30 from Harte 2011, which makes more
-                              approximations, but will run substantially faster,
-                              especially for large N
+               'approx':      uses equation 7.30 from Harte 2011, which makes
+                              more approximations, but will run substantially
+                              faster, especially for large N
                the default is 'precise'; using the default is recommended unless
                there is a good reason to do otherwise.
     lambda_dict -- optionally pass in a dictionary of lambda values so that
                    lambda can be looked up rather than solved numerically. This
-                   can substantially speed up execution and is highly
-                   recommended if large numbers of calculations are being
-                   conducted.
+                   can substantially speed up execution and is recommended if
+                   large numbers of calculations are being conducted.
+                   
     """
     
     assert S > 1, "S must be greater than 1"
