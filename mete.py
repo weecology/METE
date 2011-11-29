@@ -108,17 +108,20 @@ def build_lambda_dict(S_start, S_end, N_max, N_min=1, filename='lambda_library.p
     
     Starting at S_start and finishing at S_end this function will take values
     of N from S + 1 to N_max, determine if a value of beta is already in the 
-    lookup table for the current value of N/S, and if not then calculate the
-    value of beta and add it to the dictionary
+    lookup table for the current value of values of S and N, and if not then
+    calculate the value of beta and add it to the dictionary.
+    
+    Values are stored for S and N rather than for N/S because the precise form
+    of the solution (eq. 7.27 in Harte 2011) depends on N as well as N/S due
+    to the upper trunctation of the distribution at N.
     
     """
     lambda_dictionary = get_lambda_dict(filename)
     for S in range(S_start, S_end + 1):
         N_start = max(S + 1, N_min)
         for N in range(N_start, N_max):
-            N_over_S = N / S
-            if N_over_S not in lambda_dictionary:
-                lambda_dictionary[N_over_S] = get_lambda_sad(S, N)
+            if (S, N) not in lambda_dictionary:
+                lambda_dictionary[(S, N)] = get_lambda_sad(S, N)
     save_lambda_dict(lambda_dictionary, filename)
 
 def get_mete_pmf(S_0, N_0, lambda_sad = None):
