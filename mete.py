@@ -309,13 +309,13 @@ def predicted_slope(S, N):
         S_lower = array(ans_lower[1][0])
         ans_upper = upscale_sar(2, S, N, 4)
         if isnan(ans_upper[1][0]) == True:
-            print "Error in upscaling. z cannot be computed."
+            print("Error in upscaling. z cannot be computed.")
             return float('nan')
         else: 
             S_upper = array(ans_upper[1][0])
             return (log(S_upper / S_lower) / 2 / log(2))
     else:
-        print "Error in downscaling. Cannot find root."
+        print("Error in downscaling. Cannot find root.")
         return float('nan')
     
 def get_slopes(site_data):
@@ -423,7 +423,7 @@ def sim_spatial_whole_iter(S, N, bisec, coords, n_iter = 10000):
     max_x = 2 ** ceil((bisec - 1) / 2) 
     max_y = 2 ** floor((bisec - 1) / 2)
     if max(array(coords)[:,0]) > max_x or max(array(coords)[:,1]) > max_y:
-        print "Error: Coordinates out of bounds."
+        print("Error: Coordinates out of bounds.")
         return float('nan')
     else: 
         i = 1
