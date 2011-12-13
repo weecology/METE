@@ -36,6 +36,15 @@ def trunc_logser_cdf(x_max, p, upper_bound):
         cdf = sum(trunc_logser_pmf(x_list, p, upper_bound))
         return cdf
 
+def trunc_logser_rvs(p, upper_bound, size):
+    """Random variates of the upper truncated log-series"""
+    size = int(size)    
+    rvs = logser.rvs(p, size=size)
+    for i in range(0, size):
+        while(rvs[i] > upper_bound):
+            rvs[i] = logser.rvs(p, size=1)
+    return rvs
+
 def get_lambda_sad(S, N, version='precise', lambda_dict={}):
     """Solve for Beta, the sum of the two Lagrange multipliers for R(n, epsilon)
         
