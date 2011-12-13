@@ -406,16 +406,31 @@ def sim_spatial_one_step(abu_list):
     abu_halves = [abu_half_1, abu_half_2]
     return abu_halves
 
-def sim_spatial_whole(S, N, bisec):
-    """Simulates species abundances in all cells given S & N at whole plot level and bisection number. 
+def sim_spatial_whole(S, N, bisec, transect=False, abu=None):
+    """Simulates species abundances in all cells given S & N at whole plot
+    level and bisection number. 
     
-    Output: a list of lists, each sublist contains species abundance in one cell, and x-y coordinate of the cell.
+    Keyword arguments:
+    S -- the number of species 
+    N -- the number of individuals 
+    bisec -- the number of bisections to carry out (see Note below) 
+    transect -- boolean, if True a 1-dimensional spatial community is
+                generated, the default is to generate a spatially 2-dimensional
+                community
+    abu -- an optional abundance vector that can be supplied for the community
+           instead of using log-series random variates
    
-    Note: bisection number 1 corresponds to no bisection (whole plot). 
+    Output: a list of lists, each sublist contains species abundance in one
+    cell, and x-y coordinate of the cell.
+   
+    Note: bisection number 1 corresponds to no bisection (whole plot), and the
+    the first actual bisection is along the x-axis
     
     """
-    abu_pred = get_mete_rad(S, N, )[0]
-    abu_prev = [[1, 1, array(abu_pred)]]
+    if abu is None:
+        p = exp(-get_lambda_sad(S, N))
+        abu = trunc_logser_rvs(p, N, S)
+    abu_prev = [[1, 1, array(abu)]]
     bisec_num = 1
     while bisec_num < bisec: 
         abu_new = []
@@ -423,12 +438,16 @@ def sim_spatial_whole(S, N, bisec):
             x_prev = cell[0]
             y_prev = cell[1]
             abu_new_cell = sim_spatial_one_step(cell[2])
-            if bisec_num % 2 != 0: 
+            if(transect):
                 cell_new_1 = [x_prev * 2 - 1, y_prev, abu_new_cell[0]]
                 cell_new_2 = [x_prev * 2, y_prev, abu_new_cell[1]]
             else:
-                cell_new_1 = [x_prev, y_prev * 2 - 1, abu_new_cell[0]]
-                cell_new_2 = [x_prev, y_prev * 2, abu_new_cell[1]]
+                if bisec_num % 2 != 0:
+                    cell_new_1 = [x_prev * 2 - 1, y_prev, abu_new_cell[0]]
+                    cell_new_2 = [x_prev * 2, y_prev, abu_new_cell[1]]
+                else:
+                    cell_new_1 = [x_prev, y_prev * 2 - 1, abu_new_cell[0]]
+                    cell_new_2 = [x_prev, y_prev * 2, abu_new_cell[1]]
             abu_new.append(cell_new_1)
             abu_new.append(cell_new_2)
         abu_prev = abu_new
@@ -436,7 +455,8 @@ def sim_spatial_whole(S, N, bisec):
     return abu_prev
 
 def sim_spatial_whole_iter(S, N, bisec, coords, n_iter = 10000):
-    """Simulates the bisection n_iter times and gets the aggregated species richness in plots with given coordinates."""
+    """Simulates the bisection n_iter times and gets the aggregated species
+    richness in plots with given coordinates."""
     max_x = 2 ** ceil((bisec - 1) / 2) 
     max_y = 2 ** floor((bisec - 1) / 2)
     if max(array(coords)[:,0]) > max_x or max(array(coords)[:,1]) > max_y:
