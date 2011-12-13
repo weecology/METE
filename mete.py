@@ -79,15 +79,16 @@ def get_lambda_sad(S, N, version='precise', lambda_dict={}):
             y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
             exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
                                     min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
+            lambda_sad = -1 * log(exp_neg_lambda_sad)
     elif version == 'untruncated':
         y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
         exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
                                     BOUNDS[1] - DIST_FROM_BOUND)
+        lambda_sad = -1 * log(exp_neg_lambda_sad)
     elif version == 'approx':
         y = lambda x: x * log(1 / x) - S / N
-        exp_neg_lambda_sad = fsolve(y, BOUNDS[1] - DIST_FROM_BOUND)            
+        lambda_sad = fsolve(y, 0.0001)
             
-    lambda_sad = -1 * log(exp_neg_lambda_sad)
     return lambda_sad
 
 def get_lambda_dict(filename='lambda_library.pck'):
