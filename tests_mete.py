@@ -41,23 +41,34 @@ table7pt2 = [[4, 16, 64, '0.0459', '0.116', '5.4', '-0.037', '0.083', '0.74'],
              [256, 65536, 67108864, '0.000516', '0.000516', '256.3', '0.00051', '0.00000382', '34'],
              [256, 1048576, 1073741824, '0.0000228', '0.0000229', '256.3', '0.000023', '0.000000239', '24']]
 
-def test_get_lambda_sad():
-    """Tests SAD lambda estimates against values from Table 7.2 of Harte 2011
+def test_get_lambda_sad_precise():
+    """Tests SAD lambda estimates using the 'precise' method against values
+    from Table 7.2 of Harte 2011
     
     The table of test values is structured as S0, N0, Beta
     
     """
     data = set([(line[0], line[1], line[3]) for line in table7pt2])
     for line in data:
-        yield check_get_lambda_sad, line[0], line[1], line[2]
+        yield check_get_lambda_sad, line[0], line[1], 'precise', line[2]
         
-def check_get_lambda_sad(S0, N0, beta_known):
-    beta_code = get_lambda_sad(S0, N0)
+def test_get_lambda_sad_approx():
+    """Tests SAD lambda estimates using the 'approx' method against values
+    from Table 7.2 of Harte 2011
+    
+    The table of test values is structured as S0, N0, Beta
+    
+    """
+    data = set([(line[0], line[1], line[4]) for line in table7pt2])
+    for line in data:
+        yield check_get_lambda_sad, line[0], line[1], 'approx', line[2]
+        
+def check_get_lambda_sad(S0, N0, version, beta_known):
+    beta_code = get_lambda_sad(S0, N0, version=version)
     
     #Determine number of decimal places in known value and round code value equilalently
     decimal_places_in_beta_known = abs(Decimal(beta_known).as_tuple().exponent)
     beta_code_rounded = round(beta_code, decimal_places_in_beta_known)
-    
     assert_almost_equals(beta_code_rounded, float(beta_known), places=6)
     
 if __name__ == "__main__":
