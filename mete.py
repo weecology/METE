@@ -36,6 +36,15 @@ def trunc_logser_cdf(x_max, p, upper_bound):
         cdf = sum(trunc_logser_pmf(x_list, p, upper_bound))
         return cdf
 
+def trunc_logser_rvs(p, upper_bound, size):
+    """Random variates of the upper truncated log-series"""
+    size = int(size)    
+    rvs = logser.rvs(p, size=size)
+    for i in range(0, size):
+        while(rvs[i] > upper_bound):
+            rvs[i] = logser.rvs(p, size=1)
+    return rvs
+
 def get_lambda_sad(S, N, version='precise', lambda_dict={}):
     """Solve for Beta, the sum of the two Lagrange multipliers for R(n, epsilon)
         
@@ -375,58 +384,79 @@ def plot_universal_curve(slopes_data):
     plt.semilogx(NS, z_obs, 'ro')
     plt.show()
     
-def sim_spatial_one_step(abd_list):
+def sim_spatial_one_step(abu_list):
     """Simulates the abundances of species after bisecting one cell. 
     
     Input: species abundances in the original cell. 
-    Output: a list with two sublists containing species abundances in the two halved cells. 
+    Output: a list with two sublists containing species abundances in the two
+    halved cells. 
     Assuming indistinguishable individuals (see Harte et al. 2008). 
     
     """
-    abd_half_1 = []
-    abd_half_2 = []
-    for spp in abd_list:
+    abu_half_1 = []
+    abu_half_2 = []
+    for spp in abu_list:
         if spp == 0:
-            abd_half_1.append(0)
-            abd_half_2.append(0)
+            abu_half_1.append(0)
+            abu_half_2.append(0)
         else:
-            abd_1 = random_integers(0, spp)
-            abd_half_1.append(abd_1)
-            abd_half_2.append(spp - abd_1)
-    abd_halves = [abd_half_1, abd_half_2]
-    return abd_halves
+            abu_1 = random_integers(0, spp)
+            abu_half_1.append(abu_1)
+            abu_half_2.append(spp - abu_1)
+    abu_halves = [abu_half_1, abu_half_2]
+    return abu_halves
 
-def sim_spatial_whole(S, N, bisec):
-    """Simulates species abundances in all cells given S & N at whole plot level and bisection number. 
+def sim_spatial_whole(S, N, bisec, transect=False, abu=None):
+    """Simulates species abundances in all cells given S & N at whole plot
+    level and bisection number. 
     
-    Output: a list of lists, each sublist contains species abundance in one cell, and x-y coordinate of the cell.
+    Keyword arguments:
+    S -- the number of species 
+    N -- the number of individuals 
+    bisec -- the number of bisections to carry out (see Note below) 
+    transect -- boolean, if True a 1-dimensional spatial community is
+                generated, the default is to generate a spatially 2-dimensional
+                community
+    abu -- an optional abundance vector that can be supplied for the community
+           instead of using log-series random variates
    
-    Note: bisection number 1 corresponds to no bisection (whole plot). 
+    Output: a list of lists, each sublist contains species abundance in one
+    cell, and x-y coordinate of the cell.
+   
+    Note: bisection number 1 corresponds to no bisection (whole plot), and the
+    the first actual bisection is along the x-axis
     
     """
-    abd_pred = get_mete_rad(S, N, )[0]
-    abd_prev = [[1, 1, array(abd_pred)]]
+    if abu is None:
+        p = exp(-get_lambda_sad(S, N))
+        abu = trunc_logser_rvs(p, N, S)
+    abu_prev = [[1, 1, array(abu)]]
     bisec_num = 1
     while bisec_num < bisec: 
-        abd_new = []
-        for cell in abd_prev: 
+        abu_new = []
+        for cell in abu_prev: 
             x_prev = cell[0]
             y_prev = cell[1]
-            abd_new_cell = sim_spatial_one_step(cell[2])
-            if bisec_num % 2 != 0: 
-                cell_new_1 = [x_prev * 2 - 1, y_prev, abd_new_cell[0]]
-                cell_new_2 = [x_prev * 2, y_prev, abd_new_cell[1]]
+            abu_new_cell = sim_spatial_one_step(cell[2])
+            if(transect):
+                cell_new_1 = [x_prev * 2 - 1, y_prev, abu_new_cell[0]]
+                cell_new_2 = [x_prev * 2, y_prev, abu_new_cell[1]]
             else:
-                cell_new_1 = [x_prev, y_prev * 2 - 1, abd_new_cell[0]]
-                cell_new_2 = [x_prev, y_prev * 2, abd_new_cell[1]]
-            abd_new.append(cell_new_1)
-            abd_new.append(cell_new_2)
-        abd_prev = abd_new
+                if bisec_num % 2 != 0:
+                    cell_new_1 = [x_prev * 2 - 1, y_prev, abu_new_cell[0]]
+                    cell_new_2 = [x_prev * 2, y_prev, abu_new_cell[1]]
+                else:
+                    cell_new_1 = [x_prev, y_prev * 2 - 1, abu_new_cell[0]]
+                    cell_new_2 = [x_prev, y_prev * 2, abu_new_cell[1]]
+            abu_new.append(cell_new_1)
+            abu_new.append(cell_new_2)
+        abu_prev = abu_new
         bisec_num += 1
-    return abd_prev
+    return abu_prev
 
 def sim_spatial_whole_iter(S, N, bisec, coords, n_iter = 10000):
-    """Simulates the bisection n_iter times and gets the aggregated species richness in plots with given coordinates."""
+    """Simulates the bisection n_iter times and gets the aggregated species
+    richness in plots with given coordinates."""
     max_x = 2 ** ceil((bisec - 1) / 2) 
     max_y = 2 ** floor((bisec - 1) / 2)
     if max(array(coords)[:,0]) > max_x or max(array(coords)[:,1]) > max_y:
@@ -436,15 +466,15 @@ def sim_spatial_whole_iter(S, N, bisec, coords, n_iter = 10000):
         i = 1
         S_list = []
         while i <= n_iter:
-            abd_list = []
-            abd_plot = sim_spatial_whole(S, N, bisec)
+            abu_list = []
+            abu_plot = sim_spatial_whole(S, N, bisec)
             for i_coords in coords:
-                for j_cell in abd_plot:
+                for j_cell in abu_plot:
                     if j_cell[0] == i_coords[0] and j_cell[1] == i_coords[1]:
-                        abd_list.append(j_cell[2])
+                        abu_list.append(j_cell[2])
                         break
-            abd_agg = array(abd_list).sum(axis = 0)
-            S_i = sum(abd_agg != 0)
+            abu_agg = array(abu_list).sum(axis = 0)
+            S_i = sum(abu_agg != 0)
             S_list.append(S_i)
             i += 1
         S_avg = sum(S_list) / len(S_list)
