@@ -1,9 +1,11 @@
 """Tests for the METE (Maximum Entropy Theory of Ecology) Module"""
 
+from __future__ import division
 from mete import *
 import nose
 from nose.tools import assert_almost_equals, assert_equals
 from decimal import Decimal
+from math import exp
 
 #Fitted values of parameters from Harte 2011. The fits were done using different
 #software and therefore represent reasonable tests of the implemented algorithms
@@ -41,6 +43,19 @@ table7pt2 = [[4, 16, 64, '0.0459', '0.116', '5.4', '-0.037', '0.083', '0.74'],
              [256, 65536, 67108864, '0.000516', '0.000516', '256.3', '0.00051', '0.00000382', '34'],
              [256, 1048576, 1073741824, '0.0000228', '0.0000229', '256.3', '0.000023', '0.000000239', '24']]
 
+table7pt4 = [[1, 1/4,  '0.333'],
+             [1, 1/8,  '0.125'],
+             [1, 1/16, '0.067'],
+             [2, 1/4,  '0.434'],
+             [2, 1/8,  '0.220'],
+             [2, 1/16, '0.115'],
+             [4, 1/4,  '0.568'],
+             [4, 1/8,  '0.344'],
+             [4, 1/16, '0.201'],
+             [32, 1/4, '0.901'],
+             [32, 1/8, '0.801'],
+             [32, 1/16, '0.667']]
+
 def test_get_lambda_sad_precise():
     """Tests SAD lambda estimates using the 'precise' method against values
     from Table 7.2 of Harte 2011
@@ -70,6 +85,27 @@ def check_get_lambda_sad(S0, N0, version, beta_known):
     decimal_places_in_beta_known = abs(Decimal(beta_known).as_tuple().exponent)
     beta_code_rounded = round(beta_code, decimal_places_in_beta_known)
     assert_almost_equals(beta_code_rounded, float(beta_known), places=6)
+    
+def test_get_lambda_spatialdistrib_precise():
+    """Tests Spatial Abundance Distribution lambda estimates
+    
+    Test against values from Table 7.4 of Harte 2011 using eq. 7.50
+    
+    The table of test values is structured as n0, A/A0
+    
+    """
+    data = table7pt4
+    for line in data:
+        yield check_get_lambda_spatialdistrib, line[1], 1, line[0], line[2]
+        
+def check_get_lambda_spatialdistrib(A, A0, n0, x_known):
+    lambda_code = get_lambda_spatialdistrib(A, A0, n0)
+    x_code = exp(-lambda_code)
+    
+    #Determine number of decimal places in known value and round code value equilalently
+    decimal_places_in_x_known = abs(Decimal(x_known).as_tuple().exponent)
+    x_code_rounded = round(x_code, decimal_places_in_x_known)
+    assert_almost_equals(x_code_rounded, float(x_known), places=3)
     
 if __name__ == "__main__":
     nose.run()
