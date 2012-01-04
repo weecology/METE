@@ -193,9 +193,8 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
         lambda_spatialdistrib = 0
     else:
         # Solve for lambda_PI using the substitution x = e**-lambda_P
-        y = lambda x: 1 / (1 - x ** (n_0 + 1)) * (x / (1 - x) - x ** (n_0 +1) *
-                                                  (n_0 + 1 / (1 - x))) - (n_0 * A /
-                                                                          A_0)
+        y = lambda x: A_0 * (x / (1 - x) - (n_0 + 1) * x ** (n_0 + 1) /
+                             (1 - x ** (n_0 + 1))) - n_0 * A
         exp_neg_lambda_spatialdistrib = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
                                                BOUNDS[1] - DIST_FROM_BOUND)
         lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
