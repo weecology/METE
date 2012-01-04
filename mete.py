@@ -171,7 +171,7 @@ def get_mete_sad(S_0, N_0, lambda_sad=None, bin_edges=None):
     return predicted_sad
             
 def get_lambda_spatialdistrib(A, A_0, n_0):
-    """Solve for lambda_P from Harte et al. 2008
+    """Solve for lambda_PI from Harte 2011
     
     Keyword arguments:
     A -- the spatial scale of interest
@@ -182,6 +182,7 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
     assert type(n_0) is int, "n must be an integer"
     assert A > 0 and A_0 > 0, "A and A_0 must be greater than 0"
     assert A <= A_0, "A must be less than or equal to A_0"
+    assert version in ('precise', 'approx'), "Unknown version provided"
     
     # Set the distance from the undefined boundaries of the Lagrangian multipliers
     # to set the upper and lower boundaries for the numerical root finders
@@ -189,10 +190,10 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
     DIST_FROM_BOUND = 10 ** -15
     
     if A == A_0 / 2:
-        # Special case where A = A_0/2 from Harte et al. 2009 after eq. 6
+        # Special case where A = A_0/2 from Harte 2011 following eq. 7.50
         lambda_spatialdistrib = 0
     else:
-        # Solve for lambda_P using the substitution x = e**-lambda_P
+        # Solve for lambda_PI using the substitution x = e**-lambda_P
         y = lambda x: 1 / (1 - x ** (n_0 + 1)) * (x / (1 - x) - x ** (n_0 +1) *
                                                   (n_0 + 1 / (1 - x))) - (n_0 * A /
                                                                           A_0)
