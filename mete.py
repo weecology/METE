@@ -382,7 +382,28 @@ def plot_universal_curve(slopes_data):
     plt.hold(True)
     plt.semilogx(NS, z_obs, 'ro')
     plt.show()
+
+def heap_prob(n, A, n0, A0):
+    """Determines the HEAP probability for n given A, no, and A0
     
+    Uses equation 4.15 in Harte 2011
+    
+    """
+    if A0 / A == 2:
+        return 1 / (n0 + 1)
+    else:
+        A = A * 2
+        return sum([heap_prob(q, A, n0, A0) / (q + 1) for q in range(n, n0 + 1)])
+    
+def heap_pmf(A, n0, A0):
+    """Determines the probability mass function for HEAP
+    
+    Uses equation 4.15 in Harte 2011
+    
+    """
+    pmf = [heap_prob(n, A, n0, A0) for n in range(0, n0 + 1)]
+    return pmf
+
 def sim_spatial_one_step(abu_list):
     """Simulates the abundances of species after bisecting one cell. 
     
