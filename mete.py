@@ -499,3 +499,12 @@ def sim_spatial_whole_iter(S, N, bisec, coords, n_iter = 10000):
             i += 1
         S_avg = sum(S_list) / len(S_list)
         return S_avg
+    
+def community_energy_pdf(epsilon, S0, N0, E0):
+    lambda1 = get_lambda1()
+    lambda2 = get_lambda2()
+    gamma = lambda1 + epsilon * lambda2
+    exp_neg_gamma = exp(-gamma)
+    return S0 / N0 * (exp_neg_gamma / (1 - exp_neg_gamma) ** 2 - 
+                      exp_neg_gamma ** N0 / (1 - exp_neg_gamma) *
+                      (N0 + exp_neg_gamma / (1 - exp_neg_gamma)))
