@@ -19,7 +19,7 @@ import numpy as np
 def trunc_logser_pmf(x, p, upper_bound):
     """Probability mass function for the upper truncated log-series"""
     if p < 1:
-        return stats.logser.pmf(x, p) / stats.logser.cdf(upper_bound, p)
+        return logser.pmf(x, p) / logser.cdf(upper_bound, p)
     else:
         x = np.array(x)
         ivals = np.arange(1, upper_bound + 1)
@@ -30,7 +30,7 @@ def trunc_logser_pmf(x, p, upper_bound):
 def trunc_logser_cdf(x_max, p, upper_bound):
     """Cumulative probability function for the upper truncated log-series"""
     if p < 1:
-        return stats.logser.cdf(x_max, p) / stats.logser.cdf(upper_bound, p)
+        return logser.cdf(x_max, p) / logser.cdf(upper_bound, p)
     else:
         x_list = range(1, int(x_max) + 1)
         cdf = sum(trunc_logser_pmf(x_list, p, upper_bound))
