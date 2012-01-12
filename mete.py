@@ -447,6 +447,8 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None):
     the first actual bisection is along the x-axis
     
     """
+    if S == 1:
+        abu = [N]
     if abu is None:
         p = exp(-get_lambda_sad(S, N))
         abu = trunc_logser_rvs(p, N, S)
