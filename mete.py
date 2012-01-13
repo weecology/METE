@@ -38,6 +38,7 @@ def trunc_logser_cdf(x_max, p, upper_bound):
 
 def trunc_logser_rvs(p, upper_bound, size):
     """Random variates of the upper truncated log-series"""
+    #Allow rv generation for p > 1 (which is possible for the truncated distrib)
     size = int(size)    
     rvs = logser.rvs(p, size=size)
     for i in range(0, size):
