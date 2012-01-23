@@ -184,21 +184,20 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
     assert A > 0 and A_0 > 0, "A and A_0 must be greater than 0"
     assert A <= A_0, "A must be less than or equal to A_0"
     
-    # Set the distance from the undefined boundaries of the Lagrangian multipliers
-    # to set the upper and lower boundaries for the numerical root finders
-    BOUNDS = [0, 1]
-    DIST_FROM_BOUND = 10 ** -15
-    
-    if A == A_0 / 2:
-        # Special case where A = A_0/2 from Harte 2011 following eq. 7.50
-        lambda_spatialdistrib = 0
+    y = lambda x: x / (1 - x) - (n_0 + 1) * x ** (n_0 + 1) / (1 - x ** (n_0 + 1)) - n_0 * A / A_0
+    if A < A_0 / 2:
+        # Set the distance from the undefined boundaries of the Lagrangian multipliers
+        # to set the upper and lower boundaries for the numerical root finders
+        BOUNDS = [0, 1]
+        DIST_FROM_BOUND = 10 ** -15
+        exp_neg_lambda = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
+                                    BOUNDS[1] - DIST_FROM_BOUND)
+    elif A == A_0 / 2: exp_neg_lambda = 1
     else:
-        # Solve for lambda_PI using the substitution x = e**-lambda_P
-        y = lambda x: A_0 * (x / (1 - x) - (n_0 + 1) * x ** (n_0 + 1) /
-                             (1 - x ** (n_0 + 1))) - n_0 * A
-        exp_neg_lambda_spatialdistrib = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
-                                               BOUNDS[1] - DIST_FROM_BOUND)
-        lambda_spatialdistrib = -1 * log(exp_neg_lambda_spatialdistrib)
+        # x can potentially go up to infinity 
+        # thus use solution of a logistic equation as the starting point
+        exp_neg_lambda = (fsolve(y, - log(A_0 / A - 1)))[0] 
+    lambda_spatialdistrib = -1 * log(exp_neg_lambda)
     return lambda_spatialdistrib
 
 def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
