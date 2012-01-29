@@ -86,6 +86,38 @@ def check_get_lambda_sad(S0, N0, version, beta_known):
     beta_code_rounded = round(beta_code, decimal_places_in_beta_known)
     assert_almost_equals(beta_code_rounded, float(beta_known), places=6)
     
+def test_get_lambda1():
+    """Tests SAD lambda1 estimates against values from Table 7.2 of Harte 2011
+    
+    The table of test values is structured as S0, N0, E0, lambda1
+    
+    """
+    data = set([(line[0], line[1], line[2], line[6]) for line in table7pt2])
+    for line in data:
+        yield check_get_lambda1, line[0], line[1], line[2], line[3]
+
+def check_get_lambda1(S0, N0, E0, lambda1_known):
+    lambda1_code = get_lambda1(S0, N0, E0)
+    decimal_places_in_lambda1_known = abs(Decimal(lambda1_known).as_tuple().exponent)
+    lambda1_code_rounded = round(lambda1_code, decimal_places_in_lambda1_known)
+    assert_almost_equals(lambda1_code_rounded, float(lambda1_known), places=6)
+
+def test_get_lambda2():
+    """Tests SAD lambda1 estimates against values from Table 7.2 of Harte 2011
+    
+    The table of test values is structured as S0, N0, E0, lambda2
+    
+    """
+    data = set([(line[0], line[1], line[2], line[7]) for line in table7pt2])
+    for line in data:
+        yield check_get_lambda2, line[0], line[1], line[2], line[3]
+
+def check_get_lambda2(S0, N0, E0, lambda2_known):
+    lambda2_code = get_lambda2(S0, N0, E0)
+    decimal_places_in_lambda2_known = abs(Decimal(lambda2_known).as_tuple().exponent)
+    lambda2_code_rounded = round(lambda2_code, decimal_places_in_lambda2_known)
+    assert_almost_equals(lambda2_code_rounded, float(lambda2_known), places=6)
+
 def test_get_lambda_spatialdistrib_precise():
     """Tests Spatial Abundance Distribution lambda estimates
     
