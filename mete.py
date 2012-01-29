@@ -101,6 +101,23 @@ def get_lambda_sad(S, N, version='precise', lambda_dict={}):
             
     return lambda_sad
 
+def get_lambda2(S, N, E):
+    """Return lambda_2, the second Lagrangian multiplier for R(n, epsilon) 
+    
+    using equation 7.26 from Harte 2011.
+    
+    """
+    return S / (E - N)
+
+def get_lambda1(S, N, E, version='precise', lambda_dict={}):
+    """Return lambda_1, the first Lagrangian multiplier for R(n, epsilon)
+    
+    using equation 7.26 from Harte 2011 and function get_lambda_sad.
+    
+    """
+    beta = get_lambda_sad(S, N, version, lambda_dict)
+    return beta - get_lambda2(S, N, E)
+
 def get_lambda_dict(filename='lambda_library.pck'):
     """Check if lookup dictionary for lamba exists. If not, create an empty one."""
     if os.path.exists(filename):
