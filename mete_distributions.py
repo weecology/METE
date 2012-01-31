@@ -59,27 +59,17 @@ class psi_epsilon_gen(rv_continuous):
     lower truncated at 1 and upper truncated at E0.
     
     Usage:
-    PDF: psi_epsilon.pdf(list_of_epsilon, gamma, N0, upper_bound)
+    PDF: psi_epsilon.pdf(list_of_epsilons, S0, N0, E0)
+    CDF: psi_epsilon.cdf(list_of_epsilons, S0, N0, E0)
+    Random Numbers: psi_epsilon.rvs(S0, N0, E0, size = 1)
     
-    """
-    
-    #def __init__(self, S0, N0, E0):
-        #rv_continuous.__init__(self, momtype=1, a=1, b=E0, xa=-10.0, xb=10.0, xtol=1e-14, badvalue=None, 
-                               #name='psi_epsilon', longname='METE individual-energy distribution', shapes="S0,N0,E0", extradoc=None)
-        #self.N0 = N0
-        #self.beta = get_lambda_sad(S0, N0)
-        #self.lambda2 = get_lambda2(S0, N0, E0)
-        #self.sigma = self.beta + (E0 - 1) * self.lambda2
-        #self.norm_factor = self.lambda2 / ((exp(-self.beta) - exp(-self.beta * (N0 + 1))) / (1 - exp(-self.beta)) - 
-                                           #(exp(-self.sigma) - exp(-self.sigma * (N0 + 1))) / (1 - exp(-self.sigma)))
-        
+    """        
     def _pdf(self, x, S0, N0, E0):
-        S0, N0, E0 = int(S0), int(N0), float(E0)
         beta = get_lambda_sad(S0, N0)
         lambda2 = get_lambda2(S0, N0, E0)
         sigma = beta + (E0 - 1) * lambda2
-        norm_factor = lambda2 / ((exp(-beta) - exp(-beta * (N0 + 1))) / (1 - exp(-beta)) - 
-                                           (exp(-sigma) - exp(-sigma * (N0 + 1))) / (1 - exp(-sigma)))
+        norm_factor = lambda2 / ((np.exp(-beta) - np.exp(-beta * (N0 + 1))) / (1 - np.exp(-beta)) - 
+                                (np.exp(-sigma) - np.exp(-sigma * (N0 + 1))) / (1 - np.exp(-sigma)))
         x = np.array(x)
         exp_neg_gamma = np.exp(-(beta + (x - 1) * lambda2))
         return norm_factor * exp_neg_gamma * (1 - (N0 + 1) * exp_neg_gamma ** N0 +
@@ -92,7 +82,7 @@ class psi_epsilon_gen(rv_continuous):
     def _ppf(self, q, S0, N0, E0):
         x = []
         for q_i in q: 
-            y_i = lambda t: self.cdf(t, S0, N0, E0) - q_i
+            y_i = lambda t: self._cdf(t, S0, N0, E0) - q_i
             x.append(bisect(y_i, self.a, self.b, xtol = 1.490116e-08))
         return np.array(x)
     
