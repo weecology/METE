@@ -96,7 +96,7 @@ def get_lambda_sad(Svals, Nvals, version='precise', lambda_dict={}):
         
         # Solve for lambda_sad using the substitution x = e**-lambda_1
         if (S, N) in lambda_dict:
-            return lambda_dict[(S, N)]
+            lambda_sads.append(lambda_dict[(S, N)])
         elif version == 'precise':    
             m = array(range(1, int(N)+1)) 
             y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
