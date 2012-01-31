@@ -67,6 +67,14 @@ def test_get_lambda_sad_precise():
     for line in data:
         yield check_get_lambda_sad, line[0], line[1], 'precise', line[2]
         
+def test_get_lambda_sad_multiplevalues():
+    """Check that multiple values are handled properly"""
+    Svals = [16, 256]
+    Nvals = [64, 4096]
+    betavals = get_lambda_sad(Svals, Nvals)
+    assert_almost_equals(betavals[0], 0.101, places=3)
+    assert_almost_equals(betavals[1], 0.0147, places=4)
+    
 def test_get_lambda_sad_approx():
     """Tests SAD lambda estimates using the 'approx' method against values
     from Table 7.2 of Harte 2011
