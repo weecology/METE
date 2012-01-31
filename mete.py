@@ -46,7 +46,7 @@ def trunc_logser_rvs(p, upper_bound, size):
             rvs[i] = logser.rvs(p, size=1)
     return rvs
 
-def get_lambda_sad(S, N, version='precise', lambda_dict={}):
+def get_lambda_sad(Svals, Nvals, version='precise', lambda_dict={}):
     """Solve for Beta, the sum of the two Lagrange multipliers for R(n, epsilon)
         
     Keyword arguments:
@@ -69,37 +69,60 @@ def get_lambda_sad(S, N, version='precise', lambda_dict={}):
                    large numbers of calculations are being conducted.
                    
     """
+    #Allow both single values and iterables for S and N by converting single values to iterables
+    if not hasattr(Svals, '__iter__'):
+        Svals = array([Svals])
+    else:
+        Svals = array(Svals)
+    if not hasattr(Nvals, '__iter__'):
+        Nvals = array([Nvals])
+    else:
+        Nvals = array(Nvals)
     
-    assert S > 1, "S must be greater than 1"
-    assert N > 0, "N must be greater than 0"
-    assert S/N < 1, "N must be greater than S"
+    assert len(Svals) == len(Nvals), "S and N must have the same length"
+    assert all(Svals > 1), "S must be greater than 1"
+    assert all(Nvals > 0), "N must be greater than 0"
+    assert all(Svals/Nvals < 1), "N must be greater than S"
     assert version in ('precise', 'untruncated', 'approx'), "Unknown version provided"
     
-    # Set the distance from the undefined boundaries of the Lagrangian multipliers
-    # to set the upper and lower boundaries for the numerical root finders
-    BOUNDS = [0, 1]
-    DIST_FROM_BOUND = 10 ** -15
-    
-    # Solve for lambda_sad using the substitution x = e**-lambda_1
-    if version == 'precise':    
-        if N / S in lambda_dict:
-            return lambda_dict[N / S]
-        else:
+    lambda_sads = []
+    for i, S in enumerate(Svals):
+        N = Nvals[i]
+        
+        # Set the distance from the undefined boundaries of the Lagrangian multipliers
+        # to set the upper and lower boundaries for the numerical root finders
+        BOUNDS = [0, 1]
+        DIST_FROM_BOUND = 10 ** -15
+        
+        # Solve for lambda_sad using the substitution x = e**-lambda_1
+        if (S, N) in lambda_dict:
+            return lambda_dict[(S, N)]
+        elif version == 'precise':    
             m = array(range(1, int(N)+1)) 
             y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
             exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
-                                    min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
-            lambda_sad = -1 * log(exp_neg_lambda_sad)
-    elif version == 'untruncated':
-        y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
-        exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
-                                    BOUNDS[1] - DIST_FROM_BOUND)
-        lambda_sad = -1 * log(exp_neg_lambda_sad)
-    elif version == 'approx':
-        y = lambda x: x * log(1 / x) - S / N
-        lambda_sad = fsolve(y, 0.0001)
-            
-    return lambda_sad
+                                        min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
+            lambda_sads.append(-1 * log(exp_neg_lambda_sad))
+                
+        elif version == 'untruncated':
+            y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
+            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
+                                        BOUNDS[1] - DIST_FROM_BOUND)
+            lambda_sads.append(-1 * log(exp_neg_lambda_sad))
+        elif version == 'approx':
+            y = lambda x: x * log(1 / x) - S / N
+            lambda_sads.append(fsolve(y, 0.0001))
+        
+        #Store the value in the dictionary to avoid repeating expensive
+        #numerical routines for the same values of S and N. This is
+        #particularly important for determining pdfs through mete_distributions.
+        lambda_dict[(S, N)] = lambda_sads[-1]
+
+    #If only a single pair of S and N values was passed, return a float
+    if len(lambda_sads) == 1:
+        lambda_sads = lambda_sads[0]
+
+    return lambda_sads
 
 def get_lambda2(S, N, E):
     """Return lambda_2, the second Lagrangian multiplier for R(n, epsilon) 
