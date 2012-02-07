@@ -56,8 +56,8 @@ table7pt4 = [[1, 1/4,  '0.333'],
              [32, 1/8, '0.801'],
              [32, 1/16, '0.667']]
 
-def test_get_lambda_sad_precise():
-    """Tests SAD lambda estimates using the 'precise' method against values
+def test_get_beta_precise():
+    """Tests SAD beta estimates using the 'precise' method against values
     from Table 7.2 of Harte 2011
     
     The table of test values is structured as S0, N0, Beta
@@ -65,18 +65,18 @@ def test_get_lambda_sad_precise():
     """
     data = set([(line[0], line[1], line[3]) for line in table7pt2])
     for line in data:
-        yield check_get_lambda_sad, line[0], line[1], 'precise', line[2]
+        yield check_get_beta, line[0], line[1], 'precise', line[2]
         
-def test_get_lambda_sad_multiplevalues():
+def test_get_beta_multiplevalues():
     """Check that multiple values are handled properly"""
     Svals = [16, 256]
     Nvals = [64, 4096]
-    betavals = get_lambda_sad(Svals, Nvals)
+    betavals = get_beta(Svals, Nvals)
     assert_almost_equals(betavals[0], 0.101, places=3)
     assert_almost_equals(betavals[1], 0.0147, places=4)
     
-def test_get_lambda_sad_approx():
-    """Tests SAD lambda estimates using the 'approx' method against values
+def test_get_beta_approx():
+    """Tests SAD beta estimates using the 'approx' method against values
     from Table 7.2 of Harte 2011
     
     The table of test values is structured as S0, N0, Beta
@@ -84,10 +84,10 @@ def test_get_lambda_sad_approx():
     """
     data = set([(line[0], line[1], line[4]) for line in table7pt2])
     for line in data:
-        yield check_get_lambda_sad, line[0], line[1], 'approx', line[2]
+        yield check_get_beta, line[0], line[1], 'approx', line[2]
         
-def check_get_lambda_sad(S0, N0, version, beta_known):
-    beta_code = get_lambda_sad(S0, N0, version=version)
+def check_get_beta(S0, N0, version, beta_known):
+    beta_code = get_beta(S0, N0, version=version)
     
     #Determine number of decimal places in known value and round code value equilalently
     decimal_places_in_beta_known = abs(Decimal(beta_known).as_tuple().exponent)
@@ -111,7 +111,7 @@ def check_get_lambda1(S0, N0, E0, lambda1_known):
     assert_almost_equals(lambda1_code_rounded, float(lambda1_known), places=6)
 
 def test_get_lambda2():
-    """Tests SAD lambda1 estimates against values from Table 7.2 of Harte 2011
+    """Tests SAD lambda2 estimates against values from Table 7.2 of Harte 2011
     
     The table of test values is structured as S0, N0, E0, lambda2
     

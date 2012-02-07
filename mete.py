@@ -46,7 +46,7 @@ def trunc_logser_rvs(p, upper_bound, size):
             rvs[i] = logser.rvs(p, size=1)
     return rvs
 
-def get_lambda_sad(Svals, Nvals, version='precise', lambda_dict={}):
+def get_beta(Svals, Nvals, version='precise', beta_dict={}):
     """Solve for Beta, the sum of the two Lagrange multipliers for R(n, epsilon)
         
     Keyword arguments:
@@ -63,8 +63,8 @@ def get_lambda_sad(Svals, Nvals, version='precise', lambda_dict={}):
                               faster, especially for large N
                the default is 'precise'; using the default is recommended unless
                there is a good reason to do otherwise.
-    lambda_dict -- optionally pass in a dictionary of lambda values so that
-                   lambda can be looked up rather than solved numerically. This
+    beta_dict -- optionally pass in a dictionary of beta values so that
+                   beta can be looked up rather than solved numerically. This
                    can substantially speed up execution and is recommended if
                    large numbers of calculations are being conducted.
                    
@@ -85,7 +85,7 @@ def get_lambda_sad(Svals, Nvals, version='precise', lambda_dict={}):
     assert all(Svals/Nvals < 1), "N must be greater than S"
     assert version in ('precise', 'untruncated', 'approx'), "Unknown version provided"
     
-    lambda_sads = []
+    betas = []
     for i, S in enumerate(Svals):
         N = Nvals[i]
         
@@ -94,35 +94,35 @@ def get_lambda_sad(Svals, Nvals, version='precise', lambda_dict={}):
         BOUNDS = [0, 1]
         DIST_FROM_BOUND = 10 ** -15
         
-        # Solve for lambda_sad using the substitution x = e**-lambda_1
-        if (S, N) in lambda_dict:
-            lambda_sads.append(lambda_dict[(S, N)])
+        # Solve for beta using the substitution x = e**-beta_1
+        if (S, N) in beta_dict:
+            betas.append(beta_dict[(S, N)])
         elif version == 'precise':    
             m = array(range(1, int(N)+1)) 
             y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
-            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
+            exp_neg_beta = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
                                         min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
-            lambda_sads.append(-1 * log(exp_neg_lambda_sad))
+            betas.append(-1 * log(exp_neg_beta))
                 
         elif version == 'untruncated':
             y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
-            exp_neg_lambda_sad = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
+            exp_neg_beta = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
                                         BOUNDS[1] - DIST_FROM_BOUND)
-            lambda_sads.append(-1 * log(exp_neg_lambda_sad))
+            betas.append(-1 * log(exp_neg_beta))
         elif version == 'approx':
             y = lambda x: x * log(1 / x) - S / N
-            lambda_sads.append(fsolve(y, 0.0001))
+            betas.append(fsolve(y, 0.0001))
         
         #Store the value in the dictionary to avoid repeating expensive
         #numerical routines for the same values of S and N. This is
         #particularly important for determining pdfs through mete_distributions.
-        lambda_dict[(S, N)] = lambda_sads[-1]
+        beta_dict[(S, N)] = betas[-1]
 
     #If only a single pair of S and N values was passed, return a float
-    if len(lambda_sads) == 1:
-        lambda_sads = lambda_sads[0]
+    if len(betas) == 1:
+        betas = betas[0]
 
-    return lambda_sads
+    return betas
 
 def get_lambda2(S, N, E):
     """Return lambda_2, the second Lagrangian multiplier for R(n, epsilon) 
@@ -132,35 +132,35 @@ def get_lambda2(S, N, E):
     """
     return S / (E - N)
 
-def get_lambda1(S, N, E, version='precise', lambda_dict={}):
+def get_lambda1(S, N, E, version='precise', beta_dict={}):
     """Return lambda_1, the first Lagrangian multiplier for R(n, epsilon)
     
-    using equation 7.26 from Harte 2011 and function get_lambda_sad.
+    using equation 7.26 from Harte 2011 and function get_beta.
     
     """
-    beta = get_lambda_sad(S, N, version, lambda_dict)
+    beta = get_beta(S, N, version, beta_dict)
     return beta - get_lambda2(S, N, E)
 
-def get_lambda_dict(filename='lambda_library.pck'):
+def get_beta_dict(filename='beta_library.pck'):
     """Check if lookup dictionary for lamba exists. If not, create an empty one."""
     if os.path.exists(filename):
         dict_file = open(filename, 'r')
-        dict_lambda = cPickle.load(dict_file)
+        dict_beta = cPickle.load(dict_file)
         dict_file.close()
     else:
         dict_file = open(filename, 'w')
-        dict_lambda = {}
-        cPickle.dump(dict_lambda, dict_file)
+        dict_beta = {}
+        cPickle.dump(dict_beta, dict_file)
         dict_file.close()
-    return dict_lambda
+    return dict_beta
 
-def save_lambda_dict(lambda_dictionary, filename='lambda_library.pck'):
-    """Save the current lambda lookup table to a file"""
+def save_beta_dict(beta_dictionary, filename='beta_library.pck'):
+    """Save the current beta lookup table to a file"""
     dic_output = open(filename, 'w')
-    cPickle.dump(lambda_dictionary, dic_output)
+    cPickle.dump(beta_dictionary, dic_output)
     dic_output.close()
 
-def build_lambda_dict(S_start, S_end, N_max, N_min=1, filename='lambda_library.pck'):
+def build_beta_dict(S_start, S_end, N_max, N_min=1, filename='beta_library.pck'):
     """Add values to the lookup table for beta
     
     Starting at S_start and finishing at S_end this function will take values
@@ -173,33 +173,33 @@ def build_lambda_dict(S_start, S_end, N_max, N_min=1, filename='lambda_library.p
     to the upper trunctation of the distribution at N.
     
     """
-    lambda_dictionary = get_lambda_dict(filename)
+    beta_dictionary = get_beta_dict(filename)
     for S in range(S_start, S_end + 1):
         N_start = max(S + 1, N_min)
         for N in range(N_start, N_max):
-            if (S, N) not in lambda_dictionary:
-                lambda_dictionary[(S, N)] = get_lambda_sad(S, N)
-    save_lambda_dict(lambda_dictionary, filename)
+            if (S, N) not in beta_dictionary:
+                beta_dictionary[(S, N)] = get_beta(S, N)
+    save_beta_dict(beta_dictionary, filename)
 
-def get_mete_pmf(S_0, N_0, lambda_sad = None):
+def get_mete_pmf(S_0, N_0, beta = None):
     """Get the truncated log-series PMF predicted by METE"""
-    if lambda_sad == None:
-        lambda_sad = get_lambda_sad(S_0, N_0)
-    p = exp(-lambda_sad)
+    if beta == None:
+        beta = get_beta(S_0, N_0)
+    p = exp(-beta)
     truncated_pmf = trunc_logser_pmf(range(1, int(N_0) + 1), p, N_0)
     return truncated_pmf
 
-def get_mete_sad(S_0, N_0, lambda_sad=None, bin_edges=None):
+def get_mete_sad(S_0, N_0, beta=None, bin_edges=None):
     """Get the expected number of species with each abundance
     
-    If no value is provided for lambda_sad it will be solved for using S_0 & N_0
+    If no value is provided for beta it will be solved for using S_0 & N_0
     If bin_edges is not provided then the values returned are the estimated
         number of species for each integer value from 1 to N_0
     If bin_edges is provided it should be an array of bin edges including the
         bottom and top edges. The last value in bin_edge should be > N_0
     
     """
-    pmf = get_mete_pmf(S_0, N_0, lambda_sad)
+    pmf = get_mete_pmf(S_0, N_0, beta)
     if bin_edges != None:
         N = array(range(1, int(N_0) + 1))
         binned_pmf = []
@@ -240,13 +240,13 @@ def get_lambda_spatialdistrib(A, A_0, n_0):
     lambda_spatialdistrib = -1 * log(exp_neg_lambda)
     return lambda_spatialdistrib
 
-def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
-    """Use lambda_1 to generate SAD predicted by the METE
+def get_mete_rad(S, N, beta=None, beta_dict={}):
+    """Use beta to generate SAD predicted by the METE
     
     Keyword arguments:
     S -- the number of species
     N -- the total number of individuals
-    lambda_sad -- allows input of lambda by user if it has already been calculated
+    beta -- allows input of beta by user if it has already been calculated
     
     """
     
@@ -254,9 +254,9 @@ def get_mete_rad(S, N, lambda_sad=None, lambda_dict={}):
     assert N > 0, "N must be greater than 0"
     assert S/N < 1, "N must be greater than S"
     
-    if lambda_sad is None:
-        lambda_sad = get_lambda_sad(S, N, lambda_dict=lambda_dict)
-    p = e ** -lambda_sad
+    if beta is None:
+        beta = get_beta(S, N, beta_dict=beta_dict)
+    p = e ** -beta
     abundance  = list(empty([S]))
     rank = range(1, int(S)+1)
     rank.reverse()
@@ -298,8 +298,8 @@ def get_mete_sad_geom(S, N):
 
 def downscale_sar(A, S, N, Amin):
     """Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009"""
-    lambda_sad = get_lambda_sad(S, N)
-    x = exp(-lambda_sad)
+    beta = get_beta(S, N)
+    x = exp(-beta)
     S = S / x - N * (1 - x) / (x - x ** (N + 1)) * (1 - x ** N / (N + 1))
     A /= 2
     N /= 2
@@ -323,7 +323,7 @@ def upscale_sar(A, S, N, Amax):
         return out
     
     def solve_for_S_2A(S, N):
-        x_A = exp(-get_lambda_sad(1.5 * S, 2 * N))
+        x_A = exp(-get_beta(1.5 * S, 2 * N))
         x0 = fsolve(equations_for_S_2A, [x_A, S], args=(S, N), full_output = 1)
         S_2A, convergence = x0[0][1], x0[2]
         if convergence != 1:
@@ -490,7 +490,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None):
     if S == 1:
         abu = [N]
     if abu is None:
-        p = exp(-get_lambda_sad(S, N))
+        p = exp(-get_beta(S, N))
         abu = trunc_logser_rvs(p, N, S)
     abu_prev = [[1, 1, array(abu)]]
     bisec_num = 1

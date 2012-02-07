@@ -65,7 +65,7 @@ class psi_epsilon_gen(rv_continuous):
     
     """        
     def _pdf(self, x, S0, N0, E0):
-        beta = get_lambda_sad(S0, N0)
+        beta = get_beta(S0, N0)
         lambda2 = get_lambda2(S0, N0, E0)
         sigma = beta + (E0 - 1) * lambda2
         norm_factor = lambda2 / ((np.exp(-beta) - np.exp(-beta * (N0 + 1))) / (1 - np.exp(-beta)) - 
