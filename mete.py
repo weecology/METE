@@ -466,7 +466,7 @@ def sim_spatial_one_step(abu_list):
     abu_halves = [abu_half_1, abu_half_2]
     return abu_halves
 
-def sim_spatial_whole(S, N, bisec, transect=False, abu=None):
+def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
     """Simulates species abundances in all cells given S & N at whole plot
     level and bisection number. 
     
@@ -490,7 +490,10 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None):
     if S == 1:
         abu = [N]
     if abu is None:
-        p = exp(-get_beta(S, N))
+        if beta is None:
+            p = exp(-get_beta(S, N))
+        else:
+            p = exp(-beta)
         abu = trunc_logser_rvs(p, N, S)
     abu_prev = [[1, 1, array(abu)]]
     bisec_num = 1
