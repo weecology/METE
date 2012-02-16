@@ -20,29 +20,11 @@ class trunc_logser_gen(rv_discrete):
     """
     
     def _pmf(self, x, p, upper_bound):
-        if any(p < 1):
-            return logser.pmf(x, p) / logser.cdf(upper_bound, p)
-        else:
-            x = np.array(x)
-            ivals = np.arange(1, upper_bound + 1)
-            normalization = sum(p ** ivals / ivals)
-            pmf = (p ** x / x) / normalization
-            return pmf
-        
-    def _cdf(self, x, p, upper_bound):
-        if any(p < 1):
-            return logser.cdf(x, p) / logser.cdf(upper_bound, p)
-        else:
-            x_list = range(1, int(x) + 1)
-            cdf = sum(trunc_logser_pmf(x_list, p, upper_bound))
-            return cdf
-        
-    def _rvs(self, p, upper_bound):    
-        rvs = logser.rvs(p, size=self._size)
-        for i in range(0, self._size):
-            while(rvs[i] > upper_bound):
-                rvs[i] = logser.rvs(p, size=1)
-        return rvs
+        x = np.array(x)
+        ivals = np.arange(1, upper_bound + 1)
+        normalization = sum(p ** ivals / ivals)
+        pmf = (p ** x / x) / normalization
+        return pmf
 
 trunc_logser = trunc_logser_gen(a=1, name='trunc_logser',
                                 longname='Upper truncated logseries',
