@@ -10,6 +10,7 @@ from scipy.optimize import bisect, fsolve
 from scipy.stats import logser, geom
 from numpy.random import random_integers
 from numpy import array, e, empty
+from mete_distributions import *
 import matplotlib.pyplot as plt
 import os.path
 import cPickle
@@ -494,7 +495,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
             p = exp(-get_beta(S, N))
         else:
             p = exp(-beta)
-        abu = trunc_logser_rvs(p, N, S)
+        abu = trunc_logser.rvs(p, N, size=S)
     abu_prev = [[1, 1, array(abu)]]
     bisec_num = 1
     while bisec_num < bisec: 
