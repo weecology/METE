@@ -2,7 +2,9 @@
 
 from __future__ import division
 import numpy as np
+import mpmath
 from scipy.stats import logser, geom, rv_discrete, rv_continuous
+from scipy.stats.distributions import uniform
 from scipy.optimize import bisect
 from math import exp
 from mete import *
@@ -53,45 +55,53 @@ trunc_logser = trunc_logser_gen(a=1, name='trunc_logser',
                                 """
                                 )
 
-class psi_epsilon_gen(rv_continuous):
+class psi_epsilon:
     """Inidividual-energy distribution predicted by METE (modified from equation 7.24)
     
     lower truncated at 1 and upper truncated at E0.
     
-    Usage:
-    PDF: psi_epsilon.pdf(list_of_epsilons, S0, N0, E0)
-    CDF: psi_epsilon.cdf(list_of_epsilons, S0, N0, E0)
-    Random Numbers: psi_epsilon.rvs(S0, N0, E0, size = 1)
+    Methods:
+    pdf - probability density function
+    cdf - cumulative density function
+    ppf - inverse cdf
+    rvs - random number generator
+    E - first moment (mean)
     
-    """        
-    def _pdf(self, x, S0, N0, E0):
-        beta = get_beta(S0, N0)
-        lambda2 = get_lambda2(S0, N0, E0)
-        sigma = beta + (E0 - 1) * lambda2
-        norm_factor = lambda2 / ((np.exp(-beta) - np.exp(-beta * (N0 + 1))) / (1 - np.exp(-beta)) - 
-                                (np.exp(-sigma) - np.exp(-sigma * (N0 + 1))) / (1 - np.exp(-sigma)))
-        x = np.array(x)
-        exp_neg_gamma = np.exp(-(beta + (x - 1) * lambda2))
-        return norm_factor * exp_neg_gamma * (1 - (N0 + 1) * exp_neg_gamma ** N0 +
-                                              N0 * exp_neg_gamma ** (N0 + 1)) / (1 - exp_neg_gamma) ** 2
+    """
+    def __init__(self, S0, N0, E0):
+        self.a, self.b = 1, E0
+        self.N0 = N0
+        self.beta = get_beta(S0, N0)
+        self.lambda2 = get_lambda2(S0, N0, E0)
+        self.sigma = self.beta + (E0 - 1) * self.lambda2
+        self.norm_factor = self.lambda2 / ((exp(-self.beta) - exp(-self.beta * (N0 + 1))) / (1 - exp(-self.beta)) - 
+                                (exp(-self.sigma) - exp(-self.sigma * (N0 + 1))) / (1 - exp(-self.sigma)))
+
+    def pdf(self, x):
+        exp_neg_gamma = exp(-(self.beta + (x - 1) * self.lambda2))
+        return self.norm_factor * exp_neg_gamma * (1 - (self.N0 + 1) * exp_neg_gamma ** self.N0 +
+                                              self.N0 * exp_neg_gamma ** (self.N0 + 1)) / (1 - exp_neg_gamma) ** 2
         #Below is the exact form of equation 7.24, which seems to contain an error: 
         #return norm_factor * (exp_neg_gamma / (1 - exp_neg_gamma) ** 2 - 
                               #exp_neg_gamma ** N0 / (1 - exp_neg_gamma) *
                               #(N0 + exp_neg_gamma / (1 - exp_neg_gamma)))
 
-    def _ppf(self, q, S0, N0, E0):
-        x = []
-        for q_i in q: 
-            y_i = lambda t: self._cdf(t, S0, N0, E0) - q_i
-            x.append(bisect(y_i, self.a, self.b, xtol = 1.490116e-08))
-        return np.array(x)
+    def cdf(self, x):
+        return float(mpmath.quad(self.pdf, [self.a, x]))
     
-    def _argcheck(self, *args):
-        self.a = 1
-        self.b = args[2]
-        cond = (args[0] > 0) & (args[1] > 0) & (args[2] > 0)
-        return cond
-
-psi_epsilon = psi_epsilon_gen(a=1, name='psi_epsilon',
-                                longname='METE individual-energy distribution'
-                                )
+    def ppf(self, q):
+        y = lambda t: self.cdf(t) - q
+        x = bisect(y, self.a, self.b, xtol = 1.490116e-08)
+        return x
+    
+    def rvs(self, size):
+        out = []
+        rand_list = uniform.rvs(size = size)
+        for rand_num in rand_list:
+            out.append(self.ppf(rand_num))
+        return out
+        
+    def E(self):
+        def mom_1(x):
+            return x * self.pdf(x)
+        return float(mpmath.quad(mom_1, [self.a, self.b]))
