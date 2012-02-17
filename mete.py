@@ -10,6 +10,7 @@ from scipy.optimize import bisect, fsolve
 from scipy.stats import logser, geom
 from numpy.random import random_integers
 from numpy import array, e, empty
+from mete_distributions import *
 import matplotlib.pyplot as plt
 import os.path
 import cPickle
@@ -141,7 +142,7 @@ def get_lambda1(S, N, E, version='precise', beta_dict={}):
     beta = get_beta(S, N, version, beta_dict)
     return beta - get_lambda2(S, N, E)
 
-def get_beta_dict(filename='beta_library.pck'):
+def get_beta_dict(filename='beta_lookup_table.pck'):
     """Check if lookup dictionary for lamba exists. If not, create an empty one."""
     if os.path.exists(filename):
         dict_file = open(filename, 'r')
@@ -154,13 +155,13 @@ def get_beta_dict(filename='beta_library.pck'):
         dict_file.close()
     return dict_beta
 
-def save_beta_dict(beta_dictionary, filename='beta_library.pck'):
+def save_beta_dict(beta_dictionary, filename='beta_lookup_table.pck'):
     """Save the current beta lookup table to a file"""
     dic_output = open(filename, 'w')
     cPickle.dump(beta_dictionary, dic_output)
     dic_output.close()
 
-def build_beta_dict(S_start, S_end, N_max, N_min=1, filename='beta_library.pck'):
+def build_beta_dict(S_start, S_end, N_max, N_min=1, filename='beta_lookup_table.pck'):
     """Add values to the lookup table for beta
     
     Starting at S_start and finishing at S_end this function will take values
@@ -494,7 +495,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
             p = exp(-get_beta(S, N))
         else:
             p = exp(-beta)
-        abu = trunc_logser_rvs(p, N, S)
+        abu = trunc_logser.rvs(p, N, size=S)
     abu_prev = [[1, 1, array(abu)]]
     bisec_num = 1
     while bisec_num < bisec: 
