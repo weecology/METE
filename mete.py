@@ -5,8 +5,6 @@ Terminology and notation follows Harte (2011)
 """
 
 from __future__ import division
-import os.path
-import sys
 from math import log, exp, isnan, floor, ceil
 
 import cPickle
@@ -17,6 +15,7 @@ from scipy.stats import logser, geom
 from numpy.random import random_integers
 from numpy import array, e, empty
 
+from mete_distributions import *
 def trunc_logser_pmf(x, p, upper_bound):
     """Probability mass function for the upper truncated log-series"""
     if p < 1:
@@ -31,6 +30,7 @@ def trunc_logser_pmf(x, p, upper_bound):
 def trunc_logser_cdf(x_max, p, upper_bound):
     """Cumulative probability function for the upper truncated log-series"""
     if p < 1:
+        #If we can just renormalize the untracted cdf do so for speed
         return logser.cdf(x_max, p) / logser.cdf(upper_bound, p)
     else:
         x_list = range(1, int(x_max) + 1)
@@ -61,7 +61,7 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
     Nvals -- the total number of individuals
     version -- 'precise':     uses equation 7.27 from Harte 2011, which uses
                               minimal approximations and includes upper
-                              trunction of the distribution at N0
+                              trunction of the distribution at N_0
                'untruncated': uses equation B.4 from Harte et al. 2008, which
                               uses minimal approximations, but assumes that the
                               distribution of n goes to infinity
@@ -104,7 +104,6 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
         BOUNDS = [0, 1]
         DIST_FROM_BOUND = 10 ** -15
         
-        #Look up beta if S and N are in the lookup table.
         #If not, solve for beta using the substitution x = e**-beta
         if (S, N) in beta_dict:
             betas.append(beta_dict[(S, N)])
@@ -242,8 +241,6 @@ def get_lambda_spatialdistrib(A, A0, n0):
         DIST_FROM_BOUND = 10 ** -15
         exp_neg_lambda = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
                                     BOUNDS[1] - DIST_FROM_BOUND)
-    elif A == A0 / 2:
-        #Special case from Harte (2011) Eq. ?
         exp_neg_lambda = 1
     else:
         # x can potentially go up to infinity 
@@ -392,6 +389,8 @@ def get_slopes(site_data):
     
     """
     # return a list containing 4 values: area, observed slope, predicted slope, and N/S
+    # ToDo: figure out why values of S as low as 1 still present problems for 
+    #       this approach, this appears to happen when S << N
     data = array(site_data)    
     Zvalues = []
     area = data[:, 0]
@@ -401,7 +400,7 @@ def get_slopes(site_data):
             S_down = float(S_values[area == a])
             S_focal = float(S_values[area == a * 2 ])
             S_up = float(S_values[area == a * 4])
-            if S_focal >= 5: #don't calculate if S < 5
+            if S_focal >= 2: #don't calculate if S < 2
                 N_focal = float(data[area == a * 2, 2])
                 z_pred = predicted_slope(S_focal, N_focal)
                 z_emp = (log(S_up) - log(S_down)) / 2 / log(2)
@@ -506,7 +505,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
             p = exp(-get_beta(S, N))
         else:
             p = exp(-beta)
-        abu = trunc_logser_rvs(p, N, S)
+        abu = trunc_logser.rvs(p, N, size=S)
     abu_prev = [[1, 1, array(abu)]]
     bisec_num = 1
     while bisec_num < bisec: 
