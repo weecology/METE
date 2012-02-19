@@ -57,8 +57,8 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
     """Solve for Beta, the sum of the two Lagrange multipliers for R(n, epsilon)
         
     Keyword arguments:
-    S -- the number of species
-    N -- the total number of individuals
+    Svals -- the number of species
+    Nvals -- the total number of individuals
     version -- 'precise':     uses equation 7.27 from Harte 2011, which uses
                               minimal approximations and includes upper
                               trunction of the distribution at N_0
@@ -71,10 +71,13 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
                the default is 'precise'; using the default is recommended unless
                there is a good reason to do otherwise.
     beta_dict -- optionally pass in a dictionary of beta values so that
-                   beta can be looked up rather than solved numerically. This
-                   can substantially speed up execution and is recommended if
-                   large numbers of calculations are being conducted.
+                 beta can be looked up rather than solved numerically. This
+                 can substantially speed up execution and is recommended if
+                 large numbers of calculations are being conducted.
                    
+    Both Svals and Nvals can be vectors to allow calculation of multiple values
+    of Beta simultaneously. The vectors must be the same length.
+    
     """
     #Allow both single values and iterables for S and N by converting single values to iterables
     if not hasattr(Svals, '__iter__'):
@@ -101,7 +104,8 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
         BOUNDS = [0, 1]
         DIST_FROM_BOUND = 10 ** -15
         
-        # Solve for beta using the substitution x = e**-beta_1
+        #Look up beta if S and N are in the lookup table.
+        #If not, solve for beta using the substitution x = e**-beta
         if (S, N) in beta_dict:
             betas.append(beta_dict[(S, N)])
         elif version == 'precise':    
@@ -110,7 +114,6 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
             exp_neg_beta = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
                                         min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
             betas.append(-1 * log(exp_neg_beta))
-                
         elif version == 'untruncated':
             y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
             exp_neg_beta = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
@@ -134,7 +137,7 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
 def get_lambda2(S, N, E):
     """Return lambda_2, the second Lagrangian multiplier for R(n, epsilon) 
     
-    using equation 7.26 from Harte 2011.
+    lambda_2 is calculated using equation 7.26 from Harte 2011.
     
     """
     return S / (E - N)
@@ -142,7 +145,7 @@ def get_lambda2(S, N, E):
 def get_lambda1(S, N, E, version='precise', beta_dict={}):
     """Return lambda_1, the first Lagrangian multiplier for R(n, epsilon)
     
-    using equation 7.26 from Harte 2011 and function get_beta.
+    lamba_1 is calculated using equation 7.26 from Harte 2011 and get_beta().
     
     """
     beta = get_beta(S, N, version, beta_dict)
