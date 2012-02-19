@@ -45,7 +45,7 @@ def trunc_logser_rvs(p, upper_bound, size):
     the truncated version of the distribution.
     
     """
-    #Allow rv generation for p > 1 (which is possible for the truncated distrib)
+    assert p < 1, 'trunc_logser_rvs currently only supports random number generation for p < 1'
     size = int(size)    
     rvs = logser.rvs(p, size=size)
     for i in range(0, size):
