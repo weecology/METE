@@ -381,6 +381,8 @@ def get_slopes(site_data):
     
     """
     # return a list containing 4 values: area, observed slope, predicted slope, and N/S
+    # ToDo: figure out why values of S as low as 1 still present problems for 
+    #       this approach, this appears to happen when S << N
     data = array(site_data)    
     Zvalues = []
     area = data[:, 0]
@@ -390,7 +392,7 @@ def get_slopes(site_data):
             S_down = float(S_values[area == a])
             S_focal = float(S_values[area == a * 2 ])
             S_up = float(S_values[area == a * 4])
-            if S_focal >= 5: #don't calculate if S < 5
+            if S_focal >= 2: #don't calculate if S < 2
                 N_focal = float(data[area == a * 2, 2])
                 z_pred = predicted_slope(S_focal, N_focal)
                 z_emp = (log(S_up) - log(S_down)) / 2 / log(2)
