@@ -61,7 +61,7 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
     Nvals -- the total number of individuals
     version -- 'precise':     uses equation 7.27 from Harte 2011, which uses
                               minimal approximations and includes upper
-                              trunction of the distribution at N_0
+                              trunction of the distribution at N0
                'untruncated': uses equation B.4 from Harte et al. 2008, which
                               uses minimal approximations, but assumes that the
                               distribution of n goes to infinity
@@ -191,62 +191,62 @@ def build_beta_dict(S_start, S_end, N_max, N_min=1, filename='beta_lookup_table.
                 beta_dictionary[(S, N)] = get_beta(S, N)
     save_beta_dict(beta_dictionary, filename)
 
-def get_mete_pmf(S_0, N_0, beta = None):
+def get_mete_pmf(S0, N0, beta = None):
     """Get the truncated log-series PMF predicted by METE"""
     if beta == None:
-        beta = get_beta(S_0, N_0)
+        beta = get_beta(S0, N0)
     p = exp(-beta)
-    truncated_pmf = trunc_logser_pmf(range(1, int(N_0) + 1), p, N_0)
+    truncated_pmf = trunc_logser_pmf(range(1, int(N0) + 1), p, N0)
     return truncated_pmf
 
-def get_mete_sad(S_0, N_0, beta=None, bin_edges=None):
+def get_mete_sad(S0, N0, beta=None, bin_edges=None):
     """Get the expected number of species with each abundance
     
-    If no value is provided for beta it will be solved for using S_0 & N_0
+    If no value is provided for beta it will be solved for using S0 & N0
     If bin_edges is not provided then the values returned are the estimated
-        number of species for each integer value from 1 to N_0
+        number of species for each integer value from 1 to N0
     If bin_edges is provided it should be an array of bin edges including the
-        bottom and top edges. The last value in bin_edge should be > N_0
+        bottom and top edges. The last value in bin_edge should be > N0
     
     """
-    pmf = get_mete_pmf(S_0, N_0, beta)
+    pmf = get_mete_pmf(S0, N0, beta)
     if bin_edges != None:
-        N = array(range(1, int(N_0) + 1))
+        N = array(range(1, int(N0) + 1))
         binned_pmf = []
         for edge in range(0, len(bin_edges) - 1):
             bin_probability = sum(pmf[(N >= bin_edges[edge]) &
                                       (N < bin_edges[edge + 1])])
             binned_pmf.append(bin_probability)
         pmf = array(binned_pmf)
-    predicted_sad = S_0 * pmf
+    predicted_sad = S0 * pmf
     return predicted_sad
             
-def get_lambda_spatialdistrib(A, A_0, n_0):
+def get_lambda_spatialdistrib(A, A0, n0):
     """Solve for lambda_PI from Harte 2011
     
     Keyword arguments:
     A -- the spatial scale of interest
-    A_0 -- the maximum spatial scale under consideration
-    n_0 -- the number of individuals of the focal species at scale A_0
+    A0 -- the maximum spatial scale under consideration
+    n0 -- the number of individuals of the focal species at scale A0
     
     """
-    assert type(n_0) is int, "n must be an integer"
-    assert A > 0 and A_0 > 0, "A and A_0 must be greater than 0"
-    assert A <= A_0, "A must be less than or equal to A_0"
+    assert type(n0) is int, "n must be an integer"
+    assert A > 0 and A0 > 0, "A and A0 must be greater than 0"
+    assert A <= A0, "A must be less than or equal to A0"
     
-    y = lambda x: x / (1 - x) - (n_0 + 1) * x ** (n_0 + 1) / (1 - x ** (n_0 + 1)) - n_0 * A / A_0
-    if A < A_0 / 2:
+    y = lambda x: x / (1 - x) - (n0 + 1) * x ** (n0 + 1) / (1 - x ** (n0 + 1)) - n0 * A / A0
+    if A < A0 / 2:
         # Set the distance from the undefined boundaries of the Lagrangian multipliers
         # to set the upper and lower boundaries for the numerical root finders
         BOUNDS = [0, 1]
         DIST_FROM_BOUND = 10 ** -15
         exp_neg_lambda = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
                                     BOUNDS[1] - DIST_FROM_BOUND)
-    elif A == A_0 / 2: exp_neg_lambda = 1
+    elif A == A0 / 2: exp_neg_lambda = 1
     else:
         # x can potentially go up to infinity 
         # thus use solution of a logistic equation as the starting point
-        exp_neg_lambda = (fsolve(y, - log(A_0 / A - 1)))[0] 
+        exp_neg_lambda = (fsolve(y, - log(A0 / A - 1)))[0] 
     lambda_spatialdistrib = -1 * log(exp_neg_lambda)
     return lambda_spatialdistrib
 
@@ -352,7 +352,7 @@ def upscale_sar(A, S, N, Amax):
         up_scaled_data = upscale_sar(A, S, N, Amax)
         return ([A] + up_scaled_data[0], [S] + up_scaled_data[1])
 
-def sar(A_0, S_0, N_0, Amin, Amax):
+def sar(A0, S0, N0, Amin, Amax):
     """Harte et al. 2009 predictions for the species area relationship
     
     Takes a minimum and a maximum area along with the area, richness, and
