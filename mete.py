@@ -1,20 +1,21 @@
-"""Module for fitting and testing Harte et al.'s maximum entropy models"""
+"""Module for fitting and testing Harte et al.'s maximum entropy models
 
-#TODO: 1.modifying naming conventions to match Harte 2011
-#      2.transition to 'import numpy as np'
+Terminology and notation follows Harte (2011)
 
+"""
 
 from __future__ import division
+import os.path
+import sys
 from math import log, exp, isnan, floor, ceil
+
+import cPickle
+import numpy as np
+import matplotlib.pyplot as plt
 from scipy.optimize import bisect, fsolve
 from scipy.stats import logser, geom
 from numpy.random import random_integers
 from numpy import array, e, empty
-import matplotlib.pyplot as plt
-import os.path
-import cPickle
-import sys
-import numpy as np
 
 def trunc_logser_pmf(x, p, upper_bound):
     """Probability mass function for the upper truncated log-series"""
@@ -37,7 +38,13 @@ def trunc_logser_cdf(x_max, p, upper_bound):
         return cdf
 
 def trunc_logser_rvs(p, upper_bound, size):
-    """Random variates of the upper truncated log-series"""
+    """Random variates of the upper truncated log-series
+    
+    Currently this function only supports random variate generation for p < 1.
+    This will cover most circumstances, but it is possible to have p >= 1 for
+    the truncated version of the distribution.
+    
+    """
     #Allow rv generation for p > 1 (which is possible for the truncated distrib)
     size = int(size)    
     rvs = logser.rvs(p, size=size)
