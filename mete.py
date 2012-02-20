@@ -6,6 +6,8 @@ Terminology and notation follows Harte (2011)
 
 from __future__ import division
 from math import log, exp, isnan, floor, ceil
+import os.path
+import sys
 
 import cPickle
 import numpy as np
