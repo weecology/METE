@@ -243,6 +243,8 @@ def get_lambda_spatialdistrib(A, A0, n0):
         DIST_FROM_BOUND = 10 ** -15
         exp_neg_lambda = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
                                     BOUNDS[1] - DIST_FROM_BOUND)
+    elif A == A0 / 2:
+        #Special case from Harte (2011). See text between Eq. 7.50 and 7.51
         exp_neg_lambda = 1
     else:
         # x can potentially go up to infinity 
