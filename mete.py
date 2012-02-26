@@ -158,11 +158,13 @@ def get_beta_dict(filename='beta_lookup_table.pck'):
         dict_file = open(filename, 'r')
         dict_beta = cPickle.load(dict_file)
         dict_file.close()
+        print("Successfully loaded lookup table with %s lines" % len(dict_beta))
     else:
         dict_file = open(filename, 'w')
         dict_beta = {}
         cPickle.dump(dict_beta, dict_file)
         dict_file.close()
+        print("No lookup table found. Creating an empty table...")
     return dict_beta
 
 def save_beta_dict(beta_dictionary, filename='beta_lookup_table.pck'):
