@@ -18,8 +18,25 @@ from numpy.random import random_integers
 from numpy import array, e, empty
 
 from mete_distributions import *
+
 def trunc_logser_pmf(x, p, upper_bound):
-    """Probability mass function for the upper truncated log-series"""
+    """Probability mass function for the upper truncated log-series
+
+    Parameters
+    ----------
+    x : array_like
+        Values of `x` for which the pmf should be determined
+    p : float
+        Parameter for the log-series distribution
+    upper_bound : float
+        Upper bound of the distribution
+    
+    Returns
+    -------
+    pmf : array
+        Probability mass function for each value of `x`
+        
+    """
     if p < 1:
         return logser.pmf(x, p) / logser.cdf(upper_bound, p)
     else:
@@ -32,7 +49,7 @@ def trunc_logser_pmf(x, p, upper_bound):
 def trunc_logser_cdf(x_max, p, upper_bound):
     """Cumulative probability function for the upper truncated log-series"""
     if p < 1:
-        #If we can just renormalize the untracted cdf do so for speed
+        #If we can just renormalize the untruncated cdf do so for speed
         return logser.cdf(x_max, p) / logser.cdf(upper_bound, p)
     else:
         x_list = range(1, int(x_max) + 1)
@@ -58,28 +75,33 @@ def trunc_logser_rvs(p, upper_bound, size):
 def get_beta(Svals, Nvals, version='precise', beta_dict={}):
     """Solve for Beta, the sum of the two Lagrange multipliers for R(n, epsilon)
         
-    Keyword arguments:
-    Svals -- the number of species
-    Nvals -- the total number of individuals
-    version -- 'precise':     uses equation 7.27 from Harte 2011, which uses
-                              minimal approximations and includes upper
-                              trunction of the distribution at N_0
-               'untruncated': uses equation B.4 from Harte et al. 2008, which
-                              uses minimal approximations, but assumes that the
-                              distribution of n goes to infinity
-               'approx':      uses equation 7.30 from Harte 2011, which makes
-                              more approximations, but will run substantially
-                              faster, especially for large N
-               the default is 'precise'; using the default is recommended unless
-               there is a good reason to do otherwise.
-    beta_dict -- optionally pass in a dictionary of beta values so that
-                 beta can be looked up rather than solved numerically. This
-                 can substantially speed up execution and is recommended if
-                 large numbers of calculations are being conducted.
+    Parameters
+    ----------
+    Svals : int or array_like
+        The number of species
+    Nvals : int or array_like
+        The total number of individuals
+    version : {'precise', 'untruncated', 'approx'}, optional
+        Determine which solution to use to solve for Beta. The default is
+           'precise', which uses minimal approximations.
+        'precise' uses minimal approximations and includes upper trunction of
+            the distribution at N_0 (eq. 7.27 from Harte et al. 2011)
+        'untruncated' uses minimal approximations, but assumes that the
+            distribution of n goes to infinity (eq. B.4 from Harte et al. 2008)
+        'approx' uses more approximations, but will run substantially faster,
+            especially for large N (equation 7.30 from Harte 2011)
+    beta_dict : dict, optional
+        A dictionary of beta values so that beta can be looked up rather than
+        solved numerically. This can substantially speed up execution.
                    
     Both Svals and Nvals can be vectors to allow calculation of multiple values
     of Beta simultaneously. The vectors must be the same length.
     
+    Returns
+    -------
+    betas : list
+        beta values for each pair of Svals and Nvals
+        
     """
     #Allow both single values and iterables for S and N by converting single values to iterables
     if not hasattr(Svals, '__iter__'):
