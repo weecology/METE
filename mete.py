@@ -183,7 +183,7 @@ def get_dict(filename):
         dict_file = open(filename, 'r')
         dict_in = cPickle.load(dict_file)
         dict_file.close()
-        print("Successfully loaded lookup table with %s lines" % len(dict_beta))
+        print("Successfully loaded lookup table with %s lines" % len(dict_in))
     else:
         dict_file = open(filename, 'w')
         dict_in = {}
@@ -480,7 +480,7 @@ def heap_prob(n, A, n0, A0):
     else:
         A = A * 2
         return sum([heap_prob(q, A, n0, A0) / (q + 1) for q in range(n, n0 + 1)])
-    
+
 def heap_pmf(A, n0, A0):
     """Determines the probability mass function for HEAP
     
@@ -489,6 +489,49 @@ def heap_pmf(A, n0, A0):
     """
     pmf = [heap_prob(n, A, n0, A0) for n in range(0, n0 + 1)]
     return pmf
+    
+def heap_prob2(n, A, n0, A0, pdict={}):
+    """
+    Determines the HEAP probability for n given A, no, and A0
+    Uses equation 4.15 in Harte 2011
+    Returns the probability that n individuals are observed in a quadrat of area A
+    """
+    i = int(log(A0 / A,2))
+    if (n,n0,i) not in pdict:
+        if i == 1:
+            pdict[(n,n0,i)] = 1 / (n0 + 1)
+        else:
+            A = A * 2
+            pdict[(n,n0,i)] = sum([heap_prob2(q, A, n0, A0, pdict)/ (q + 1) for q in range(n, n0 + 1)])
+    return pdict[(n,n0,i)]
+
+def get_heap_dict(n, A, n0, A0, plist=[0,{}]):
+    """
+    Determines the HEAP probability for n given A, n0, and A0
+    Uses equation 4.15 in Harte 2011
+    Returns a list with the first element is the probability of n individuals 
+    beting observed in a quadrat of area A, and the second element is a 
+    dictionary that was built to compute that probability
+    """
+    i = int(log(A0 / A,2))
+    if (n,n0,i) not in plist[1]:
+        if i == 1:
+            plist[1][(n,n0,i)] = 1 / (n0 + 1)
+        else:
+            A = A * 2
+            plist[1][(n,n0,i)] = sum([get_heap(q, A, n0, A0, plist)[0]/ (q + 1) for q in range(n, n0 + 1)])
+    plist[0] = plist[1][(n,n0,i)]
+    return plist
+
+def build_heap_dict(n,n0,i, filename='heap_lookup_table.pck'):
+    """Add values to the lookup table for heap"""
+    heap_dictionary = get_dict(filename)
+    if (n,n0,i) not in heap_dictionary:    
+        A = 1        
+        A0 = 2 ** i
+        heap_dictionary.update( get_heap_dict(n,A,n0,A0,[0,heap_dictionary])[1] )
+        save_dict(heap_dictionary, filename)
+    print("Dictionary building completed")    
 
 def sim_spatial_one_step(abu_list):
     """Simulates the abundances of species after bisecting one cell. 
