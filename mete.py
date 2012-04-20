@@ -519,7 +519,7 @@ def get_heap_dict(n, A, n0, A0, plist=[0,{}]):
             plist[1][(n,n0,i)] = 1 / (n0 + 1)
         else:
             A = A * 2
-            plist[1][(n,n0,i)] = sum([get_heap(q, A, n0, A0, plist)[0]/ (q + 1) for q in range(n, n0 + 1)])
+            plist[1][(n,n0,i)] = sum([get_heap_dict(q, A, n0, A0, plist)[0]/ (q + 1) for q in range(n, n0 + 1)])
     plist[0] = plist[1][(n,n0,i)]
     return plist
 
