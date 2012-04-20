@@ -174,25 +174,32 @@ def get_lambda1(S, N, E, version='precise', beta_dict={}):
     beta = get_beta(S, N, version, beta_dict)
     return beta - get_lambda2(S, N, E)
 
-def get_beta_dict(filename='beta_lookup_table.pck'):
-    """Check if lookup dictionary for lamba exists. If not, create an empty one."""
+def get_dict(filename):
+    """Check if lookup dictionary for lamba exists. If not, create an empty one.
+    Arguments: 
+    filename = is the name of the dictionary file to read from, (e.g., 'beta_lookup_table.pck')
+    """
     if os.path.exists(filename):
         dict_file = open(filename, 'r')
-        dict_beta = cPickle.load(dict_file)
+        dict_in = cPickle.load(dict_file)
         dict_file.close()
         print("Successfully loaded lookup table with %s lines" % len(dict_beta))
     else:
         dict_file = open(filename, 'w')
-        dict_beta = {}
-        cPickle.dump(dict_beta, dict_file)
+        dict_in = {}
+        cPickle.dump(dict_in, dict_file)
         dict_file.close()
         print("No lookup table found. Creating an empty table...")
-    return dict_beta
+    return dict_in
 
-def save_beta_dict(beta_dictionary, filename='beta_lookup_table.pck'):
-    """Save the current beta lookup table to a file"""
+def save_dict(dictionary, filename):
+    """Save the current beta lookup table to a file
+    Arguments:
+    dictionary = the dictionary object to output
+    filename = the name of the dictionary file to write to (e.g., 'beta_lookup_table.pck')
+    """
     dic_output = open(filename, 'w')
-    cPickle.dump(beta_dictionary, dic_output)
+    cPickle.dump(dictionary, dic_output)
     dic_output.close()
 
 def build_beta_dict(S_start, S_end, N_max, N_min=1, filename='beta_lookup_table.pck'):
@@ -208,13 +215,13 @@ def build_beta_dict(S_start, S_end, N_max, N_min=1, filename='beta_lookup_table.
     to the upper trunctation of the distribution at N.
     
     """
-    beta_dictionary = get_beta_dict(filename)
+    beta_dictionary = get_dict(filename)
     for S in range(S_start, S_end + 1):
         N_start = max(S + 1, N_min)
         for N in range(N_start, N_max):
             if (S, N) not in beta_dictionary:
                 beta_dictionary[(S, N)] = get_beta(S, N)
-    save_beta_dict(beta_dictionary, filename)
+    save_dict(beta_dictionary, filename)
 
 def get_mete_pmf(S0, N0, beta = None):
     """Get the truncated log-series PMF predicted by METE"""
