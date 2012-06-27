@@ -602,14 +602,14 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
             p = exp(-beta)
         abu = trunc_logser.rvs(p, N, size=S)
     abu_prev = [[1, 1, array(abu)]]
-    bisec_num = 1
+    bisec_num = 0
     while bisec_num < bisec: 
         abu_new = []
         for cell in abu_prev: 
             x_prev = cell[0]
             y_prev = cell[1]
             abu_new_cell = sim_spatial_one_step(cell[2])
-            if(transect):
+            if transect:
                 cell_new_1 = [x_prev * 2 - 1, y_prev, abu_new_cell[0]]
                 cell_new_2 = [x_prev * 2, y_prev, abu_new_cell[1]]
             else:
