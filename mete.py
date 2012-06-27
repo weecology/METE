@@ -5,7 +5,7 @@ Terminology and notation follows Harte (2011)
 """
 
 from __future__ import division
-from math import log, exp, isnan, floor, ceil
+from math import log, exp, isnan, floor, ceil, factorial
 import os.path
 import sys
 
@@ -15,9 +15,12 @@ import matplotlib.pyplot as plt
 from scipy.optimize import bisect, fsolve
 from scipy.stats import logser, geom
 from numpy.random import random_integers
+from random import uniform
 from numpy import array, e, empty
 
 from mete_distributions import *
+
+
 
 def trunc_logser_pmf(x, p, upper_bound):
     """Probability mass function for the upper truncated log-series
@@ -469,28 +472,7 @@ def plot_universal_curve(slopes_data):
     plt.semilogx(NS, z_obs, 'ro')
     plt.show()
 
-def heap_prob(n, A, n0, A0):
-    """Determines the HEAP probability for n given A, no, and A0
-    
-    Uses equation 4.15 in Harte 2011
-    
-    """
-    if A0 / A == 2:
-        return 1 / (n0 + 1)
-    else:
-        A = A * 2
-        return sum([heap_prob(q, A, n0, A0) / (q + 1) for q in range(n, n0 + 1)])
-
-def heap_pmf(A, n0, A0):
-    """Determines the probability mass function for HEAP
-    
-    Uses equation 4.15 in Harte 2011
-    
-    """
-    pmf = [heap_prob(n, A, n0, A0) for n in range(0, n0 + 1)]
-    return pmf
-    
-def heap_prob2(n, A, n0, A0, pdict={}):
+def heap_prob(n, A, n0, A0, pdict={}):
     """
     Determines the HEAP probability for n given A, no, and A0
     Uses equation 4.15 in Harte 2011
@@ -502,10 +484,32 @@ def heap_prob2(n, A, n0, A0, pdict={}):
             pdict[(n,n0,i)] = 1 / (n0 + 1)
         else:
             A = A * 2
-            pdict[(n,n0,i)] = sum([heap_prob2(q, A, n0, A0, pdict)/ (q + 1) for q in range(n, n0 + 1)])
+            pdict[(n,n0,i)] = sum([heap_prob(q, A, n0, A0, pdict)/ (q + 1) for q in range(n, n0 + 1)])
     return pdict[(n,n0,i)]
 
-def get_heap_dict(n, A, n0, A0, plist=[0,{}]):
+def heap_pmf(A, n0, A0):
+    """Determines the probability mass function for HEAP
+    
+    Uses equation 4.15 in Harte 2011
+    
+    """
+    pmf = [heap_prob(n, A, n0, A0) for n in range(0, n0 + 1)]
+    return pmf
+    
+def binomial(n, k):
+    return factorial(n) / (factorial(k) * factorial(n - k))
+
+def get_big_binomial(n, k, fdict):
+    """returns the natural log of the binomial coefficent n choose k"""
+    if n > 0 and k > 0:
+        nFact = fdict[n]
+        kFact = fdict[k]
+        nkFact = fdict[n - k]
+        return nFact - kFact - nkFact
+    else:
+        return 0
+
+def get_heap_dict(n, A, n0, A0, plist=[0, {}]):
     """
     Determines the HEAP probability for n given A, n0, and A0
     Uses equation 4.15 in Harte 2011
@@ -532,6 +536,19 @@ def build_heap_dict(n,n0,i, filename='heap_lookup_table.pck'):
         heap_dictionary.update( get_heap_dict(n,A,n0,A0,[0,heap_dictionary])[1] )
         save_dict(heap_dictionary, filename)
     print("Dictionary building completed")    
+
+def bisect_prob(n, A, n0, A0, psi, pdict={}):
+    """Theorem 2.3 in Conlisk et al. (2007)"""
+    total = 0
+    i = A0 / A 
+    a = (1 - psi) / psi  
+    if(i == 2):
+        pdict[(n, n0, i)] = single_prob(n, A, n0, A0, psi) 
+    else:
+        A = A * 2
+        pdict[(n, n0, i)] = sum([bisect_prob(q, A, n0, A0, psi, pdict) * single_prob(n, A, q, A0, psi) for q in range(n, n0 + 1)])
+    return pdict[(n, n0,i )] 
+
 
 def sim_spatial_one_step(abu_list):
     """Simulates the abundances of species after bisecting one cell. 
@@ -642,3 +659,74 @@ def community_energy_pdf(epsilon, S0, N0, E0):
     return S0 / N0 * (exp_neg_gamma / (1 - exp_neg_gamma) ** 2 - 
                       exp_neg_gamma ** N0 / (1 - exp_neg_gamma) *
                       (N0 + exp_neg_gamma / (1 - exp_neg_gamma)))
+
+def which(boolean_list):
+    """ Mimics the R function 'which()' and it returns the indics of the
+    boolean list that are labeled True """
+    return [i for i in range(0, len(boolean_list)) if boolean_list[i]]
+
+def order(num_list):
+    """
+    This function mimics the R function 'order()' and it carries out a 
+    bubble sort on a list and an associated index list.
+    The function only returns the index list so that the order of the sorting
+    is returned but not the list in sorted order
+    Note: [x[i] for i in order(x)] is the same as sorted(x)
+    """
+    num_list = list(num_list)
+    list_length = len(num_list)
+    index_list = range(0, list_length)
+    swapped = True 
+    while swapped:
+        swapped = False
+        for i in range(1, list_length):
+            if num_list[i-1] > num_list[i]:
+                temp1 = num_list[i-1]
+                temp2 = num_list[i]
+                num_list[i-1] = temp2
+                num_list[i] = temp1 
+                temp1 = index_list[i-1]
+                temp2 = index_list[i]
+                index_list[i-1] = temp2
+                index_list[i] = temp1 
+                swapped = True
+    return index_list
+
+
+def single_rvs(n0, psi, size=1):
+    """Generate random deviates from the single division model, still 
+    is not working properly possibily needs to be checked"""
+    cdf = single_cdf(1,n0,2,psi)
+    xvals = [0] * size
+    for i in range(size):
+        rand_float = uniform(0,1)
+        temp_cdf = list(cdf + [rand_float])
+        ordered_values = order(temp_cdf)
+        xvals[i] = [j for j in range(0,len(ordered_values)) if ordered_values[j] == (n0 + 1)][0]
+    return xvals 
+
+def getF(a, n):
+    """ Eq. 7 in Conlisk et al. (2007) """
+    out = 1  
+    if n != 0:
+        for i in range(1, n + 1):
+            out *= (a + i - 1) / i  
+    return out 
+
+def single_prob(n, A, n0, A0, psi):
+    """
+    Eq. 1.3 in Conlisk et al. (2007), note that this implmentation is
+    only correct when the variable c = 2 
+    """
+    a = (1 - psi) / psi 
+    return (getF(a, n) * getF(a, n0 - n)) / getF(2 * a, n0) 
+
+
+def single_cdf(A, n0, A0, psi):
+    cdf = [0.0] * (n0 + 1) 
+    for n in range(0, n0 + 1):
+        if n == 0:
+            cdf[n] = single_prob(n, A, n0, A0, psi) 
+        else:
+            cdf[n] = cdf[n - 1] + single_prob(n, A, n0, A0, psi) 
+    return cdf
