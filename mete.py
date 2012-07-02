@@ -600,7 +600,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
             p = exp(-get_beta(S, N))
         else:
             p = exp(-beta)
-        abu = trunc_logser.rvs(p, N, size=S)
+        abu = trunc_logser_rvs(p, N, size=S)
     abu_prev = [[1, 1, array(abu)]]
     bisec_num = 0
     while bisec_num < bisec: 
