@@ -18,7 +18,6 @@ from numpy.random import random_integers
 from random import uniform
 from numpy import array, e, empty
 
-from mete_distributions import *
 
 
 
