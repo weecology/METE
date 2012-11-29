@@ -342,7 +342,6 @@ def sar_noniterative(Avals, A0, S0, N0):
     A numpy array the first row contains the Avals, and the second row contains the expected
     S values
     """
-    assert S0 <= 5, "S0 must be greater than 5"
     A_ok = [i > 0 and i < A0 for i in Avals]
     if False in A_ok:
         print "Warning: will only compute S for Areas that are greater than zero and less than A0"
