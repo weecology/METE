@@ -256,12 +256,12 @@ def get_mete_sad(S0, N0, beta=None, bin_edges=None):
     return predicted_sad
             
 def get_lambda_spatialdistrib(A, A0, n0):
-    """Solve for lambda_PI from Harte 2011
+    """Solve for lambda_Pi from Harte 2011 equ. 7.50 and 7.51
     
-    Keyword arguments:
-    A -- the spatial scale of interest
-    A0 -- the maximum spatial scale under consideration
-    n0 -- the number of individuals of the focal species at scale A0
+    Arguments:
+    A = the spatial scale of interest
+    A0 = the maximum spatial scale under consideration
+    n0 = the number of individuals of the focal species at scale A0
     
     """
     assert type(n0) is int, "n must be an integer"
@@ -285,6 +285,28 @@ def get_lambda_spatialdistrib(A, A0, n0):
         exp_neg_lambda = (fsolve(y, - log(A0 / A - 1)))[0] 
     lambda_spatialdistrib = -1 * log(exp_neg_lambda)
     return lambda_spatialdistrib
+
+def get_mete_Pi(n, A, n0, A0, lambda_spatialdistrib=None):
+    """
+    Solve for the METE PI distribution from Harte 2011 equ 7.48 and 7.49.
+        
+    Arguments:
+    n = number of individuals of the focal species at the scale A;
+    A = the spatial scale of interest;
+    n0 = the number of individuals of the focal species at scale A0;
+    A0 = the maximum spatial scale under consideration;
+    
+    Returns:
+    The probability of observing n out of n0 individuals in a randomly selected quadrat
+    of area A out of A0
+    """
+    if lambda_spatialdistrib == None:
+        x = exp(-get_lambda_spatialdistrib(A, A0, n0))
+    else:
+        x = exp(-lambda_spatialdistrib)
+    Z_Pi = sum([x ** i for i in range(0, n0 + 1)])    
+    mete_Pi = x ** n / Z_Pi
+    return mete_Pi
 
 def get_mete_rad(S, N, beta=None, beta_dict={}):
     """Use beta to generate SAD predicted by the METE
