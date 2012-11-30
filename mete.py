@@ -285,6 +285,20 @@ def get_lambda_spatialdistrib(A, A0, n0):
     lambda_spatialdistrib = -1 * log(exp_neg_lambda)
     return lambda_spatialdistrib 
 
+def get_spatialdistrib_dict(A, A0, n0, lambda_list=[0, {}]):
+    """Solve for lambda_Pi from Harte 2011 equ. 7.50 and 7.51
+    
+    Arguments:
+    A = the spatial scale of interest
+    A0 = the maximum spatial scale under consideration
+    n0 = the number of individuals of the focal species at scale A0
+    
+    """
+    if (A, A0, n0) not in lambda_list[1]:
+        lambda_list[1][(A, A0, n0)] = get_lambda_spatialdistrib(A, A0, n0)
+    lambda_list[0] = lambda_list[1][(A, A0, n0)]
+    return lambda_list
+
 def get_mete_Pi(n, A, n0, A0):
     """
     Solve for the METE Pi distribution from Harte 2011 equ 7.48 and 7.49.
