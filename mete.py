@@ -496,7 +496,7 @@ def predicted_slope(S, N):
             return float('nan')
         else: 
             S_upper = array(ans_upper[1][0])
-            return (log(S_upper / S_lower) / 2 / log(2))
+            return (log(S_upper / S_lower) / log(4))
     else:
         print("Error in downscaling. Cannot find root.")
         return float('nan')
@@ -522,7 +522,7 @@ def get_slopes(site_data):
             if S_focal >= 2: #don't calculate if S < 2
                 N_focal = float(data[area == a * 2, 2])
                 z_pred = predicted_slope(S_focal, N_focal)
-                z_emp = (log(S_up) - log(S_down)) / 2 / log(2)
+                z_emp = (log(S_up) - log(S_down)) / log(4)
                 NS = N_focal / S_focal
                 parameters = [a * 2, z_emp, z_pred, NS]
                 Zvalues.append(parameters) 
