@@ -254,20 +254,19 @@ def get_mete_sad(S0, N0, beta=None, bin_edges=None):
         pmf = array(binned_pmf)
     predicted_sad = S0 * pmf
     return predicted_sad
-            
+
 def get_lambda_spatialdistrib(A, A0, n0):
-    """Solve for lambda_PI from Harte 2011
+    """Solve for lambda_Pi from Harte 2011 equ. 7.50 and 7.51
     
-    Keyword arguments:
-    A -- the spatial scale of interest
-    A0 -- the maximum spatial scale under consideration
-    n0 -- the number of individuals of the focal species at scale A0
+    Arguments:
+    A = the spatial scale of interest
+    A0 = the maximum spatial scale under consideration
+    n0 = the number of individuals of the focal species at scale A0
     
     """
     assert type(n0) is int, "n must be an integer"
     assert A > 0 and A0 > 0, "A and A0 must be greater than 0"
     assert A <= A0, "A must be less than or equal to A0"
-    
     y = lambda x: x / (1 - x) - (n0 + 1) * x ** (n0 + 1) / (1 - x ** (n0 + 1)) - n0 * A / A0
     if A < A0 / 2:
         # Set the distance from the undefined boundaries of the Lagrangian multipliers
@@ -275,7 +274,7 @@ def get_lambda_spatialdistrib(A, A0, n0):
         BOUNDS = [0, 1]
         DIST_FROM_BOUND = 10 ** -15
         exp_neg_lambda = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
-                                    BOUNDS[1] - DIST_FROM_BOUND)
+                                   BOUNDS[1] - DIST_FROM_BOUND)
     elif A == A0 / 2:
         #Special case from Harte (2011). See text between Eq. 7.50 and 7.51
         exp_neg_lambda = 1
@@ -284,7 +283,90 @@ def get_lambda_spatialdistrib(A, A0, n0):
         # thus use solution of a logistic equation as the starting point
         exp_neg_lambda = (fsolve(y, - log(A0 / A - 1)))[0] 
     lambda_spatialdistrib = -1 * log(exp_neg_lambda)
-    return lambda_spatialdistrib
+    return lambda_spatialdistrib 
+
+def get_spatialdistrib_dict(A, A0, n0, lambda_list=[0, {}]):
+    """Solve for lambda_Pi from Harte 2011 equ. 7.50 and 7.51
+    
+    Arguments:
+    A = the spatial scale of interest
+    A0 = the maximum spatial scale under consideration
+    n0 = the number of individuals of the focal species at scale A0
+    
+    """
+    if (A, A0, n0) not in lambda_list[1]:
+        lambda_list[1][(A, A0, n0)] = get_lambda_spatialdistrib(A, A0, n0)
+    lambda_list[0] = lambda_list[1][(A, A0, n0)]
+    return lambda_list
+
+def get_mete_Pi(n, A, n0, A0):
+    """
+    Solve for the METE Pi distribution from Harte 2011 equ 7.48 and 7.49.
+        
+    Arguments:
+    n = number of individuals of the focal species at the scale A;
+    A = the spatial scale of interest;
+    n0 = the number of individuals of the focal species at scale A0;
+    A0 = the maximum spatial scale under consideration;
+    
+    Returns:
+    The probability of observing n out of n0 individuals in a randomly selected quadrat
+    of area A out of A0
+    """
+    x = exp(-get_lambda_spatialdistrib(A, A0, n0))
+    Z_Pi = sum([x ** i for i in range(0, n0 + 1)])    
+    mete_Pi = x ** n / Z_Pi
+    return mete_Pi
+
+def calc_S_from_Pi(A, A0, S0, N0):
+    """ 
+    Solves for the expected number of species using the non-interative approach
+    Harte 2011 equ C.1
+    
+    Arguments:
+    A = the spatial scale of interest;
+    A0 = the maximum spatial scale under consideration;
+    S0 = the total number of species that occurs in A0
+    N0 = the total number of individuals that occurs in A0
+
+    Returns:
+    The expected number of species inferred from the anchor scale
+    """
+    beta = get_beta(S0, N0)
+    def calc_prob_joint(beta, n, A, A0):
+        prob_occur = 1 - get_mete_Pi(0, A, n, A0)
+        prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))
+        prob_joint = prob_n_indiv * prob_occur
+        return prob_joint
+    prob_of_occurrence = [calc_prob_joint(beta, n, A, A0) for n in range(1, N0 + 1)]
+    S = S0 * sum(prob_of_occurrence)
+    return S
+
+def sar_noniterative(Avals, A0, S0, N0):
+    """ Computes the downscaled METE noninterative species-area relationship (SAR)
+    Harte 2011 equ C.1\
+    
+    Arguments:
+    Avals: the spatial scales of interest, must be greater than zero and less than A0;
+    A0 = the maximum spatial scale under consideration;
+    S0 = the total number of species in A0;
+    N0 = the total number of individuals in A0;
+    
+    Returns:
+    A numpy array the first row contains the Avals, and the second row contains the expected
+    S values
+    """
+    A_ok = [i > 0 and i < A0 for i in Avals]
+    if False in A_ok:
+        print "Warning: will only compute S for Areas that are greater than zero and less than A0"
+        Avals  = [Avals[i] for i in which(A_ok)]
+    Svals = [calc_S_from_Pi(A, A0, S0, N0) for A in Avals]
+    Svals.append(S0)
+    Avals.append(A0)
+    out = list()
+    out.append(Avals)
+    out.append(Svals)
+    return out
 
 def get_mete_rad(S, N, beta=None, beta_dict={}):
     """Use beta to generate SAD predicted by the METE
@@ -416,11 +498,11 @@ def predicted_slope(S, N):
             return float('nan')
         else: 
             S_upper = array(ans_upper[1][0])
-            return (log(S_upper / S_lower) / 2 / log(2))
+            return (log(S_upper / S_lower) / log(4))
     else:
         print("Error in downscaling. Cannot find root.")
         return float('nan')
-    
+
 def get_slopes(site_data):
     """get slopes from various scales, output list of area slope and N/S
     
@@ -442,7 +524,7 @@ def get_slopes(site_data):
             if S_focal >= 2: #don't calculate if S < 2
                 N_focal = float(data[area == a * 2, 2])
                 z_pred = predicted_slope(S_focal, N_focal)
-                z_emp = (log(S_up) - log(S_down)) / 2 / log(2)
+                z_emp = (log(S_up) - log(S_down)) / log(4)
                 NS = N_focal / S_focal
                 parameters = [a * 2, z_emp, z_pred, NS]
                 Zvalues.append(parameters) 
@@ -451,7 +533,7 @@ def get_slopes(site_data):
         else:
             break
     return Zvalues    
-    
+
 def plot_universal_curve(slopes_data):
     """plots ln(N/S) x slope for empirical data and MaxEnt predictions. 
     
@@ -496,7 +578,7 @@ def heap_pmf(A, n0, A0):
     """
     pmf = [heap_prob(n, A, n0, A0) for n in range(0, n0 + 1)]
     return pmf
-    
+
 def binomial(n, k):
     return factorial(n) / (factorial(k) * factorial(n - k))
 
@@ -515,7 +597,7 @@ def get_heap_dict(n, A, n0, A0, plist=[0, {}]):
     Determines the HEAP probability for n given A, n0, and A0
     Uses equation 4.15 in Harte 2011
     Returns a list with the first element is the probability of n individuals 
-    beting observed in a quadrat of area A, and the second element is a 
+    being observed in a quadrat of area A, and the second element is a 
     dictionary that was built to compute that probability
     """
     i = int(log(A0 / A,2))
@@ -651,7 +733,7 @@ def sim_spatial_whole_iter(S, N, bisec, coords, n_iter = 10000):
             i += 1
         S_avg = sum(S_list) / len(S_list)
         return S_avg
-    
+
 def community_energy_pdf(epsilon, S0, N0, E0):
     lambda1 = get_lambda1()
     lambda2 = get_lambda2()
