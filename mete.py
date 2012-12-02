@@ -369,7 +369,9 @@ def upscale_sar(A, S, N, Amax):
         return out
     
     def solve_for_S_2A(S, N):
-        x_A = exp(-get_beta(1.5 * S, 2 * N))
+        # Starting point of beta_2A, calculated with N_2A = 2 * N
+        # and S_2A = 1.5 * S (a reasonable guess for S_2A)
+        x_A = exp(-get_beta(1.5 * S, 2 * N)) 
         x0 = fsolve(equations_for_S_2A, [x_A, S], args=(S, N), full_output = 1)
         S_2A, convergence = x0[0][1], x0[2]
         if convergence != 1:
