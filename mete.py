@@ -321,7 +321,7 @@ def get_mete_Pi(n, A, n0, A0):
 
 def calc_S_from_Pi(A, A0, S0, N0):
     """ 
-    Solves for the expected number of species using the non-interative approach
+    Downscales the expected number of species using the non-interative approach
     Harte 2011 equ C.1
     
     Arguments:
@@ -341,6 +341,24 @@ def calc_S_from_Pi(A, A0, S0, N0):
         return prob_joint
     prob_of_occurrence = [calc_prob_joint(beta, n, A, A0) for n in range(1, N0 + 1)]
     S = S0 * sum(prob_of_occurrence)
+    return S
+
+def calc_S_from_Pi_fixed_abu(A, A0, n0vals):
+    """ 
+    Downscales the expected number of species using the non-interative approach
+    Harte 2011 when the abundances are fixed, equ 3.12
+    
+    Arguments:
+    A = the spatial scale of interest;
+    A0 = the maximum spatial scale under consideration;
+    S0 = the total number of species that occurs in A0
+    n0vals= a list of species abundances
+
+    Returns:
+    The expected number of species inferred from the anchor scale
+    """
+    prob_of_occurrence = [1 - get_mete_Pi(0, A, n0, A0) for n0 in n0vals]
+    S = sum(prob_of_occurrence)
     return S
 
 def sar_noniterative(Avals, A0, S0, N0):
@@ -363,6 +381,21 @@ def sar_noniterative(Avals, A0, S0, N0):
         Avals  = [Avals[i] for i in which(A_ok)]
     Svals = [calc_S_from_Pi(A, A0, S0, N0) for A in Avals]
     Svals.append(S0)
+    Avals.append(A0)
+    out = list()
+    out.append(Avals)
+    out.append(Svals)
+    return out
+
+def sar_noniterative_fixed_abu(Avals, A0, n0vals):
+    """Predictions for the downscaled METE SAR using Eq. 3.12 from Harte 2011 when the  
+    abundances (n0) are fixed"""
+    A_ok = [i > 0 and i < A0 for i in Avals]
+    if False in A_ok:
+        print "Warning: will only compute S for Areas that are greater than zero and less than A0"
+        Avals  = [Avals[i] for i in which(A_ok)]
+    Svals = [calc_S_from_Pi_fixed_abu(A, A0, n0vals) for A in Avals]
+    Svals.append(len(n0vals))
     Avals.append(A0)
     out = list()
     out.append(Avals)
@@ -437,6 +470,19 @@ def downscale_sar(A, S, N, Amin):
     else:
         down_scaled_data = downscale_sar(A, S, N, Amin)
         return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
+
+def downscale_sar_fixed_abu(A, n0vals, Amin):
+    """Predictions for downscaled SAR when abundance is fixed using the iterative approach
+    by combining Eq. 7.51 and Eq. 3.12 from Harte 2011"""
+    S = sum([1 - (1 / (n0 + 1)) for n0 in n0vals])
+    A /= 2
+    n0vals = [n0 / 2 for n0 in n0vals]
+    if A <= Amin:
+        return ([A], [S])
+    else:
+        down_scaled_data = downscale_sar_fixed_abu(A, n0vals, Amin)
+        return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
+
 
 def upscale_sar(A, S, N, Amax):
     """Predictions for upscaled SAR using Eqs. 8 and 9 from Harte et al. 2009"""
