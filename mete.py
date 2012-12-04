@@ -134,15 +134,16 @@ def get_beta(Svals, Nvals, version='precise', beta_dict={}):
         if (S, N) in beta_dict:
             betas.append(beta_dict[(S, N)])
         elif version == 'precise':    
-            m = array(range(1, int(N)+1)) 
-            y = lambda x: sum(x ** m / N * S) - sum((x ** m) / m)
+            n = array(range(1, int(N)+1)) 
+            y = lambda x: sum(x ** n / N * S) - sum((x ** n) / n)
             exp_neg_beta = bisect(y, BOUNDS[0] + DIST_FROM_BOUND,
-                                        min((sys.float_info[0] / S) ** (1 / N), 2), xtol = 1.490116e-08)
+                                  min((sys.float_info[0] / S) ** (1 / N), 2),
+                                  xtol = 1.490116e-08)
             betas.append(-1 * log(exp_neg_beta))
         elif version == 'untruncated':
             y = lambda x: 1 / log(1 / (1 - x)) * x / (1 - x) - N / S
             exp_neg_beta = bisect(y, BOUNDS[0] + DIST_FROM_BOUND, 
-                                        BOUNDS[1] - DIST_FROM_BOUND)
+                                     BOUNDS[1] - DIST_FROM_BOUND)
             betas.append(-1 * log(exp_neg_beta))
         elif version == 'approx':
             y = lambda x: x * log(1 / x) - S / N
