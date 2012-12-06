@@ -471,18 +471,27 @@ def downscale_sar(A, S, N, Amin):
         down_scaled_data = downscale_sar(A, S, N, Amin)
         return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
 
-def downscale_sar_fixed_abu(A, n0vals, Amin):
+def downscale_sar_fixed_abu(A0, n0vals, Amin):
     """Predictions for downscaled SAR when abundance is fixed using the iterative approach
     by combining Eq. 7.51 and Eq. 3.12 from Harte 2011"""
-    S = sum([1 - (1 / (n0 + 1)) for n0 in n0vals])
-    A /= 2
-    n0vals = [n0 / 2 for n0 in n0vals]
-    if A <= Amin:
-        return ([A], [S])
-    else:
-        down_scaled_data = downscale_sar_fixed_abu(A, n0vals, Amin)
-        return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
-
+    flag = 0
+    A = A0
+    Avals = []
+    while flag == 0:
+        A /= 2        
+        if (A >= Amin):
+            Avals.append(A)       
+        else:
+            flag = 1
+    Avals.reverse()
+    Svals = [sum([1 - heap_prob(0, A, n0, A0) for n0 in n0vals]) for A in Avals]
+    S0 = len(n0vals)
+    Svals.append(S0)
+    Avals.append(A0)
+    out = []
+    out.append(Avals)
+    out.append(Svals)
+    return out
 
 def upscale_sar(A, S, N, Amax):
     """Predictions for upscaled SAR using Eqs. 8 and 9 from Harte et al. 2009"""
