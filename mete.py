@@ -514,7 +514,7 @@ def upscale_sar(A, S, N, Amax):
         # Initial guess of S_2A is calculated using extrapolation with z_A
         S_2A_init = S * 2 ** z_A
         x_A = exp(-get_beta(S_2A_init, 2 * N)) 
-        x0 = fsolve(equations_for_S_2A, [x_A, S], args=(S, N), full_output = 1)
+        x0 = fsolve(equations_for_S_2A, [x_A, S_2A_init], args=(S, N), full_output = 1)
         S_2A, convergence = x0[0][1], x0[2]
         if convergence != 1:
             return float('nan')
