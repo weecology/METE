@@ -507,10 +507,20 @@ def upscale_sar(A, S, N, Amax):
         return out
     
     def solve_for_S_2A(S, N):
-        # Starting point of beta_2A, calculated with N_2A = 2 * N
-        # and S_2A = 1.5 * S (a reasonable guess for S_2A)
-        x_A = exp(-get_beta(1.5 * S, 2 * N)) 
-        x0 = fsolve(equations_for_S_2A, [x_A, S], args=(S, N), full_output = 1)
+        beta_A = get_beta(S, N)
+        # The slope at (N, S) along universal curve
+        # From Eqn.11 in Harte et al. 2009
+        # Initial guess of S_2A is calculated using extrapolation with z_A
+        if beta_A < 0: # to avoid taking the log of a negative number
+            z_A = 0
+        else:
+            z_A = 1 / log(2) / log(1 / beta_A)
+        if z_A < 0 or z_A > 1: # to avoid initial guesses that are obviously incorrect
+            S_2A_init = S * 1.5
+        else:
+            S_2A_init = S * 2 ** z_A
+        x_A = exp(-get_beta(S_2A_init, 2 * N)) 
+        x0 = fsolve(equations_for_S_2A, [x_A, S_2A_init], args=(S, N), full_output = 1)
         S_2A, convergence = x0[0][1], x0[2]
         if convergence != 1:
             return float('nan')
