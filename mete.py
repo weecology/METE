@@ -618,13 +618,14 @@ def heap_prob(n, A, n0, A0, pdict={}):
     Returns the probability that n individuals are observed in a quadrat of area A
     """
     i = int(log(A0 / A,2))
-    if (n,n0,i) not in pdict:
+    key = (n, n0, i)
+    if key not in pdict:
         if i == 1:
-            pdict[(n,n0,i)] = 1 / (n0 + 1)
+            pdict[key] = 1 / (n0 + 1)
         else:
             A = A * 2
-            pdict[(n,n0,i)] = sum([heap_prob(q, A, n0, A0, pdict)/ (q + 1) for q in range(n, n0 + 1)])
-    return pdict[(n,n0,i)]
+            pdict[key] = sum([heap_prob(q, A, n0, A0, pdict)/ (q + 1) for q in range(n, n0 + 1)])
+    return pdict[key]
 
 def heap_pmf(A, n0, A0):
     """Determines the probability mass function for HEAP
@@ -675,6 +676,41 @@ def build_heap_dict(n,n0,i, filename='heap_lookup_table.pck'):
         heap_dictionary.update( get_heap_dict(n,A,n0,A0,[0,heap_dictionary])[1] )
         save_dict(heap_dictionary, filename)
     print("Dictionary building completed")    
+
+def get_lambda_heap(i, n0): 
+    """
+    Harte 2007, Scaling Biodiveristy Chp. Eq. 6.4, pg.106 
+    i: number of bisections
+    """
+    if i == 0:
+        lambda_heap = 1
+    if i != 0:
+        A0 = 2 ** i
+        lambda_heap = 1 - heap_prob(0, 1, n0, A0)
+    return(lambda_heap)
+
+def chi_heap(i, j, n0, chi_dict={}):
+    """
+    calculates the commonality function for a given degree of bisection (i) at 
+    orders of seperation (j)
+    Harte 2007, Scaling Biodiveristy Chp. Eq. 6.10, pg.113  
+    i: number of bisections
+    j: order of seperation
+    """
+    if n0 == 1:
+        out = 0
+    else:
+        key = (i, j, n0)
+        if key not in chi_dict:
+            if j == 1:
+                chi_dict[key] = (n0 + 1)**-1 * sum(map(lambda m: get_lambda_heap(i - 1, m) *
+                                                                 get_lambda_heap(i - 1, n0 - m), range(1, n0)))
+            else:
+                i -= 1
+                j -= 1
+                chi_dict[key] = (n0 + 1)**-1 * sum(map(lambda m: chi_heap(i, j, m, chi_dict), range(2, n0 + 1)))
+        out = chi_dict[key]
+    return(out)
 
 def bisect_prob(n, A, n0, A0, psi, pdict={}):
     """Theorem 2.3 in Conlisk et al. (2007)"""
