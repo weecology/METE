@@ -722,6 +722,63 @@ def chi_heap(i, j, n0, chi_dict={}):
         out = chi_dict[key]
     return(out)
 
+def sep_orders(i, shape='sqr'):
+    """
+    Arguments:
+    i: number of bisections or scale of A relative to A0
+    shape: sqr, rect, or golden to indicate that A0 is a
+    square, rectangle, or golden rectangle, respectively
+    Note: golden rectangle has the dimensions L x L(2^.5)
+    
+    Returns:
+    seperation orders in which the number of bisections is 
+    shape preserving    
+    """
+    if shape == 'golden':
+        j = range(i, 0, -1)
+    if shape == 'sqr':
+        j = range(i, 0, -1)
+        even_indices = which([index == 0 for index in map(lambda j: j % 2, j)])        
+        j = [j[index] for index in even_indices]
+    if shape == 'rect':
+        j = range(i, 0, -1)
+        odd_indices = which([index == 1 for index in map(lambda j: j % 2, j)])        
+        j = [j[index] for index in odd_indices]
+    return j
+
+def calc_D(j, L=1):
+    """
+    Distance calculation given serperation order
+    that are shape preserving
+    From Ostling et al. (2004) pg. 630
+    j: seperation order
+    L: width of rectangle of area A0  
+    """
+    D = L / 2**(j / 2)
+    return D
+
+def sor_heap(A, n0, A0, shape='sqr'):
+    """
+    Computes sorensen's simiarilty index for a 
+    given spatial grain (A) at all possible seperation distances 
+    Scaling Biodiveristy Chp. Eq. 6.10, pg.113  
+    
+    shape: shape of A0 see function sep_orders()
+    """
+    if isinstance(n0, (int, long)):
+        n0 = [n0]
+    i = int(log(A0 / A, 2))
+    j = sep_orders(i, shape)
+    d = map(calc_D, j)
+    chi = np.empty((len(n0), len(d)))
+    lambda_vals = np.empty((len(n0), len(d)))
+    for s in range(0, len(n0)):
+        chi[s, ] = map(lambda jval: chi_heap(i, jval, n0[s]), j)
+        lambda_vals[s, ] = [get_lambda_heap(i, n0[s])] * len(d)
+    sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
+    out = np.array([d, sor]).transpose()
+    return out
+
 def bisect_prob(n, A, n0, A0, psi, pdict={}):
     """Theorem 2.3 in Conlisk et al. (2007)"""
     total = 0
