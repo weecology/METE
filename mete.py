@@ -767,16 +767,21 @@ def sor_heap(A, n0, A0, shape='sqr'):
     """
     if isinstance(n0, (int, long)):
         n0 = [n0]
+    n0_unique = list(set(n0))
+    n0_uni_len = len(n0_unique)
+    n0_count = [n0.count(x) for x in n0_unique]
     i = int(log(A0 / A, 2))
     j = sep_orders(i, shape)
     d = map(calc_D, j)
-    chi = np.empty((len(n0), len(d)))
-    lambda_vals = np.empty((len(n0), len(d)))
-    for s in range(0, len(n0)):
-        chi[s, ] = map(lambda jval: chi_heap(i, jval, n0[s]), j)
-        lambda_vals[s, ] = [get_lambda_heap(i, n0[s])] * len(d)
+    chi = np.empty((n0_uni_len, len(d)))
+    lambda_vals = np.empty((n0_uni_len, len(d)))
+    for sp in range(0, n0_uni_len):
+        chi_tmp = map(lambda jval: chi_heap(i, jval, n0_unique[sp]), j)
+        lambda_tmp = [get_lambda_heap(i, n0_unique[sp])] * len(d)
+        chi[sp, ] = [n0_count[sp] * x for x in chi_tmp]
+        lambda_vals[sp, ] = [n0_count[sp] * x for x in lambda_tmp]
     sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
-    out = np.array([d, sor]).transpose()
+    out = np.array([j, d, sor]).transpose()
     return out
 
 def bisect_prob(n, A, n0, A0, psi, pdict={}):
