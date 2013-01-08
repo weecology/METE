@@ -836,8 +836,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
     Output: a list of lists, each sublist contains species abundance in one
     cell, and x-y coordinate of the cell.
    
-    Note: bisection number 1 corresponds to no bisection (whole plot), and the
-    the first actual bisection is along the x-axis
+    Note: bisection number 1 corresponds to first bisection which is along the x-axis
     
     """
     if S == 1:
@@ -860,7 +859,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
                 cell_new_1 = [x_prev * 2 - 1, y_prev, abu_new_cell[0]]
                 cell_new_2 = [x_prev * 2, y_prev, abu_new_cell[1]]
             else:
-                if bisec_num % 2 != 0:
+                if bisec_num % 2 == 0:
                     cell_new_1 = [x_prev * 2 - 1, y_prev, abu_new_cell[0]]
                     cell_new_2 = [x_prev * 2, y_prev, abu_new_cell[1]]
                 else:
