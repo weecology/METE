@@ -785,7 +785,8 @@ def sor_heap(A, A0, S0, N0, shape='sqr', L=1):
         chi[n - 1, ] = [prob_n_indiv * x for x in chi_tmp]
         lambda_vals[n - 1, ] = [prob_n_indiv * x for x in lambda_tmp]
     sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
-    out = np.array([j, d, sor]).transpose()
+    i = [i] * len(j)
+    out = np.array([i, j, d, sor]).transpose()
     return out
 
 def sor_heap_fixed_abu(A, n0, A0, shape='sqr', L=1):
@@ -814,7 +815,8 @@ def sor_heap_fixed_abu(A, n0, A0, shape='sqr', L=1):
         chi[sp, ] = [n0_count[sp] * x for x in chi_tmp]
         lambda_vals[sp, ] = [n0_count[sp] * x for x in lambda_tmp]
     sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
-    out = np.array([j, d, sor]).transpose()
+    i = [i] * len(j)
+    out = np.array([i, j, d, sor]).transpose()
     return out
 
 def bisect_prob(n, A, n0, A0, psi, pdict={}):
