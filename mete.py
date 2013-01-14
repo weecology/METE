@@ -336,6 +336,7 @@ def calc_S_from_Pi(A, A0, S0, N0):
     beta = get_beta(S0, N0)
     def calc_prob_joint(beta, n, A, A0):
         prob_occur = 1 - get_mete_Pi(0, A, n, A0)
+        ## Eq. 7.32 in Harte 2009
         prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))
         prob_joint = prob_n_indiv * prob_occur
         return prob_joint
@@ -757,10 +758,40 @@ def calc_D(j, L=1):
     D = L / 2**(j / 2)
     return D
 
-def sor_heap(A, n0, A0, shape='sqr', L=1):
+def sor_heap(A, A0, S0, N0, shape='sqr', L=1):
     """
-    Computes sorensen's simiarilty index for a 
+    Computes sorensen's simiarilty index using the truncated logseries SAD
     given spatial grain (A) at all possible seperation distances 
+    Scaling Biodiveristy Chp. Eq. 6.10, pg.113  
+    Also see Plotkin and Muller-Landau (2002), Eq. 10 which 
+    demonstrates formulation of sorensen for this case in which
+    the abuance distribution is specified but the realized abundances are unknown
+    
+    shape: shape of A0 see function sep_orders()
+    L: the width of the rectangle or square area A0
+    """
+    beta = get_beta(S0, N0)
+    i = int(log(A0 / A, 2))
+    j = sep_orders(i, shape)
+    L = [L] * len(j)
+    d = map(calc_D, j, L)
+    chi = np.empty((N0, len(d)))
+    lambda_vals = np.empty((N0, len(d)))
+    for n in range(1, N0 + 1):
+        ## Eq. 7.32 in Harte 2009        
+        prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))    
+        chi_tmp = map(lambda jval: chi_heap(i, jval, n), j)
+        lambda_tmp = [get_lambda_heap(i, n)] * len(d)
+        chi[n - 1, ] = [prob_n_indiv * x for x in chi_tmp]
+        lambda_vals[n - 1, ] = [prob_n_indiv * x for x in lambda_tmp]
+    sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
+    out = np.array([j, d, sor]).transpose()
+    return out
+
+def sor_heap_fixed_abu(A, n0, A0, shape='sqr', L=1):
+    """
+    Computes sorensen's simiarilty index for a given SAD (n0)
+    and spatial grain (A) at all possible seperation distances 
     Scaling Biodiveristy Chp. Eq. 6.10, pg.113  
     
     shape: shape of A0 see function sep_orders()
