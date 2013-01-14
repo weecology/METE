@@ -752,18 +752,19 @@ def calc_D(j, L=1):
     that are shape preserving
     From Ostling et al. (2004) pg. 630
     j: seperation order
-    L: width of rectangle of area A0  
+    L: width of rectangle or square of area A0  
     """
     D = L / 2**(j / 2)
     return D
 
-def sor_heap(A, n0, A0, shape='sqr'):
+def sor_heap(A, n0, A0, shape='sqr', L=1):
     """
     Computes sorensen's simiarilty index for a 
     given spatial grain (A) at all possible seperation distances 
     Scaling Biodiveristy Chp. Eq. 6.10, pg.113  
     
     shape: shape of A0 see function sep_orders()
+    L: the width of the rectangle or square area A0
     """
     if isinstance(n0, (int, long)):
         n0 = [n0]
@@ -772,7 +773,8 @@ def sor_heap(A, n0, A0, shape='sqr'):
     n0_count = [n0.count(x) for x in n0_unique]
     i = int(log(A0 / A, 2))
     j = sep_orders(i, shape)
-    d = map(calc_D, j)
+    L = [L] * len(j)
+    d = map(calc_D, j, L)
     chi = np.empty((n0_uni_len, len(d)))
     lambda_vals = np.empty((n0_uni_len, len(d)))
     for sp in range(0, n0_uni_len):
