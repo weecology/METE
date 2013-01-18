@@ -634,9 +634,27 @@ def heap_prob(n, A, n0, A0, pdict={}):
         if i == 1:
             pdict[key] = 1 / (n0 + 1)
         else:
-            A = A * 2
+            A *= 2
             pdict[key] = sum([heap_prob(q, A, n0, A0, pdict)/ (q + 1) for q in range(n, n0 + 1)])
     return pdict[key]
+
+def bisect_prob(n, A, n0, A0, psi, pdict={}):
+    """
+    Univaritate pdf of the Bisection model
+    Theorem 2.3 in Conlisk et al. (2007)
+    psi is an aggregation parameter {0,1}
+    Note: when psi = 0.5 that the Bisection Model = HEAP Model
+    """
+    total = 0
+    i = int(log(A0 / A, 2))
+    key = (n, n0, i, psi)
+    if key not in pdict:
+        if(i == 1):
+            pdict[key] = single_prob(n, A, n0, A0, psi) 
+        else:
+            A *= 2
+            pdict[key] = sum([bisect_prob(q, A, n0, A0, psi, pdict) * single_prob(n, A, q, A0, psi) for q in range(n, n0 + 1)])
+    return pdict[key] 
 
 def heap_pmf(A, n0, A0):
     """Determines the probability mass function for HEAP
@@ -690,8 +708,11 @@ def build_heap_dict(n,n0,i, filename='heap_lookup_table.pck'):
 
 def get_lambda_heap(i, n0): 
     """
+    Probability of observing at least one individual of a species with n0 individuals
+    given a randomly sampled quadrat of area A out of a total area A0.     
     Harte 2007, Scaling Biodiveristy Chp. Eq. 6.4, pg.106 
     i: number of bisections
+    n0: abundance
     """
     if i == 0:
         lambda_heap = 1
@@ -699,6 +720,22 @@ def get_lambda_heap(i, n0):
         A0 = 2 ** i
         lambda_heap = 1 - heap_prob(0, 1, n0, A0)
     return(lambda_heap)
+
+def get_lambda_bisect(i, n0, psi): 
+    """
+    Probability of observing at least one individual of a species with n0 individuals
+    given a randomly sampled quadrat of area A out of a total area A0.
+    i: number of bisections
+    n0: abundance
+    psi: aggregation parameter {0, 1}
+    """
+    if i == 0:
+        lambda_bisect = 1
+    if i != 0:
+        A0 = 2 ** i
+        lambda_bisect = 1 - bisect_prob(0, 1, n0, A0, psi)
+    return(lambda_bisect)
+
 
 def chi_heap(i, j, n0, chi_dict={}):
     """
@@ -720,6 +757,33 @@ def chi_heap(i, j, n0, chi_dict={}):
                 i -= 1
                 j -= 1
                 chi_dict[key] = (n0 + 1)**-1 * sum(map(lambda m: chi_heap(i, j, m, chi_dict), range(2, n0 + 1)))
+        out = chi_dict[key]
+    return(out)
+
+def chi_bisect(i, j, n0, psi, chi_dict={}):
+    """
+    calculates the commonality function for a given degree of bisection (i) at 
+    orders of seperation (j) which a specific level of aggregation.
+    i: number of bisections
+    j: order of seperation
+    n0: abundance
+    psi: aggregation parameter {0, 1}
+    Note: Function has only been checked at psi = .5, more testing is needed here
+    """
+    if n0 == 1:
+        out = 0
+    else:
+        key = (i, j, n0, psi)
+        if key not in chi_dict:
+            if j == 1: 
+                chi_dict[key] = single_prob(0, 1, n0, 2 ** i, psi) * (
+                                sum(map(lambda m: get_lambda_bisect(i - 1, m, psi) *
+                                                  get_lambda_bisect(i - 1, n0 - m, psi), range(1, n0))))
+            else:
+                i -= 1
+                j -= 1
+                chi_dict[key] = single_prob(0, 1, n0, 2 ** i, psi) * (
+                                sum(map(lambda m: chi_bisect(i, j, m, psi, chi_dict), range(2, n0 + 1))))
         out = chi_dict[key]
     return(out)
 
@@ -819,18 +883,68 @@ def sor_heap_fixed_abu(A, n0, A0, shape='sqr', L=1):
     out = np.array([i, j, d, sor]).transpose()
     return out
 
-def bisect_prob(n, A, n0, A0, psi, pdict={}):
-    """Theorem 2.3 in Conlisk et al. (2007)"""
-    total = 0
-    i = A0 / A 
-    a = (1 - psi) / psi  
-    if(i == 2):
-        pdict[(n, n0, i)] = single_prob(n, A, n0, A0, psi) 
-    else:
-        A = A * 2
-        pdict[(n, n0, i)] = sum([bisect_prob(q, A, n0, A0, psi, pdict) * single_prob(n, A, q, A0, psi) for q in range(n, n0 + 1)])
-    return pdict[(n, n0,i )] 
+def sor_bisect(A, A0, S0, N0, psi, shape='sqr', L=1):
+    """
+    Computes sorensen's simiarilty index using the truncated logseries SAD
+    given spatial grain (A) at all possible seperation distances 
+    Scaling Biodiveristy Chp. Eq. 6.10, pg.113  
+    Also see Plotkin and Muller-Landau (2002), Eq. 10 which 
+    demonstrates formulation of sorensen for this case in which
+    the abuance distribution is specified but the realized abundances are unknown
+    
+    psi: aggregation parameter {0, 1}
+    shape: shape of A0 see function sep_orders()
+    L: the width of the rectangle or square area A0
+    """
+    beta = get_beta(S0, N0)
+    i = int(log(A0 / A, 2))
+    j = sep_orders(i, shape)
+    L = [L] * len(j)
+    d = map(calc_D, j, L)
+    chi = np.empty((N0, len(d)))
+    lambda_vals = np.empty((N0, len(d)))
+    for n in range(1, N0 + 1):
+        ## Eq. 7.32 in Harte 2009        
+        prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))    
+        chi_tmp = map(lambda jval: chi_bisect(i, jval, n, psi), j)
+        lambda_tmp = [get_lambda_bisect(i, n, psi)] * len(d)
+        chi[n - 1, ] = [prob_n_indiv * x for x in chi_tmp]
+        lambda_vals[n - 1, ] = [prob_n_indiv * x for x in lambda_tmp]
+    sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
+    i = [i] * len(j)
+    out = np.array([i, j, d, sor]).transpose()
+    return out
 
+def sor_bisect_fixed_abu(A, n0, A0, psi, shape='sqr', L=1):
+    """
+    Computes sorensen's simiarilty index for a given SAD (n0)
+    and spatial grain (A) at all possible seperation distances 
+    Scaling Biodiveristy Chp. Eq. 6.10, pg.113  
+    
+    psi: aggregation parameter {0, 1}
+    shape: shape of A0 see function sep_orders()
+    L: the width of the rectangle or square area A0
+    """
+    if isinstance(n0, (int, long)):
+        n0 = [n0]
+    n0_unique = list(set(n0))
+    n0_uni_len = len(n0_unique)
+    n0_count = [n0.count(x) for x in n0_unique]
+    i = int(log(A0 / A, 2))
+    j = sep_orders(i, shape)
+    L = [L] * len(j)
+    d = map(calc_D, j, L)
+    chi = np.empty((n0_uni_len, len(d)))
+    lambda_vals = np.empty((n0_uni_len, len(d)))
+    for sp in range(0, n0_uni_len):
+        chi_tmp = map(lambda jval: chi_bisect(i, jval, n0_unique[sp], psi), j)
+        lambda_tmp = [get_lambda_bisect(i, n0_unique[sp], psi)] * len(d)
+        chi[sp, ] = [n0_count[sp] * x for x in chi_tmp]
+        lambda_vals[sp, ] = [n0_count[sp] * x for x in lambda_tmp]
+    sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
+    i = [i] * len(j)
+    out = np.array([i, j, d, sor]).transpose()
+    return out
 
 def sim_spatial_one_step(abu_list):
     """Simulates the abundances of species after bisecting one cell. 
@@ -987,7 +1101,11 @@ def single_rvs(n0, psi, size=1):
     return xvals 
 
 def getF(a, n):
-    """ Eq. 7 in Conlisk et al. (2007) """
+    """ 
+    Eq. 7 in Conlisk et al. (2007)
+    this is a computationaly efficient way to compute 
+    gamma(a + n) / (gamma(a) * gamma(n + 1))
+    """
     out = 1  
     if n != 0:
         for i in range(1, n + 1):
@@ -998,6 +1116,8 @@ def single_prob(n, A, n0, A0, psi):
     """
     Eq. 1.3 in Conlisk et al. (2007), note that this implmentation is
     only correct when the variable c = 2 
+    Note: if psi = .5 this is the special HEAP case in which the
+    function no longer depends on n.
     """
     a = (1 - psi) / psi 
     return (getF(a, n) * getF(a, n0 - n)) / getF(2 * a, n0) 
