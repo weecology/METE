@@ -912,7 +912,8 @@ def sor_bisect(A, A0, S0, N0, psi, shape='sqr', L=1):
         lambda_vals[n - 1, ] = [prob_n_indiv * x for x in lambda_tmp]
     sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
     i = [i] * len(j)
-    out = np.array([i, j, d, sor]).transpose()
+    psi = [psi] * len(j)
+    out = np.array([psi, i, j, d, sor]).transpose()
     return out
 
 def sor_bisect_fixed_abu(A, n0, A0, psi, shape='sqr', L=1):
@@ -943,7 +944,8 @@ def sor_bisect_fixed_abu(A, n0, A0, psi, shape='sqr', L=1):
         lambda_vals[sp, ] = [n0_count[sp] * x for x in lambda_tmp]
     sor = map(lambda col: sum(chi[:, col]) / sum(lambda_vals[:, col]), range(0, len(d)))
     i = [i] * len(j)
-    out = np.array([i, j, d, sor]).transpose()
+    psi = [psi] * len(j)
+    out = np.array([psi, i, j, d, sor]).transpose()
     return out
 
 def sim_spatial_one_step(abu_list):
