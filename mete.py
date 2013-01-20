@@ -650,10 +650,10 @@ def bisect_prob(n, A, n0, A0, psi, pdict={}):
     key = (n, n0, i, psi)
     if key not in pdict:
         if(i == 1):
-            pdict[key] = single_prob(n, A, n0, A0, psi) 
+            pdict[key] = single_prob(n, n0, psi) 
         else:
             A *= 2
-            pdict[key] = sum([bisect_prob(q, A, n0, A0, psi, pdict) * single_prob(n, A, q, A0, psi) for q in range(n, n0 + 1)])
+            pdict[key] = sum([bisect_prob(q, A, n0, A0, psi, pdict) * single_prob(n, q, psi) for q in range(n, n0 + 1)])
     return pdict[key] 
 
 def heap_pmf(A, n0, A0):
@@ -776,13 +776,13 @@ def chi_bisect(i, j, n0, psi, chi_dict={}):
         key = (i, j, n0, psi)
         if key not in chi_dict:
             if j == 1: 
-                chi_dict[key] = single_prob(0, 1, n0, 2, psi) * (
+                chi_dict[key] = single_prob(0, n0, psi) * (
                                 sum(map(lambda m: get_lambda_bisect(i - 1, m, psi) *
                                                   get_lambda_bisect(i - 1, n0 - m, psi), range(1, n0))))
             else:
                 i -= 1
                 j -= 1
-                chi_dict[key] = single_prob(0, 1, n0, 2, psi) * (
+                chi_dict[key] = single_prob(0, n0, psi) * (
                                 sum(map(lambda m: chi_bisect(i, j, m, psi, chi_dict), range(2, n0 + 1))))
         out = chi_dict[key]
     return(out)
@@ -1120,11 +1120,11 @@ def single_prob(n, n0, psi, c=2):
     F = (get_F(a, n) * get_F((c - 1) * a, n0 - n)) / get_F(c * a, n0) 
     return float(F)
 
-def single_cdf(A, n0, A0, psi):
+def single_cdf(n0, psi):
     cdf = [0.0] * (n0 + 1) 
     for n in range(0, n0 + 1):
         if n == 0:
-            cdf[n] = single_prob(n, A, n0, A0, psi) 
+            cdf[n] = single_prob(n, n0, psi) 
         else:
-            cdf[n] = cdf[n - 1] + single_prob(n, A, n0, A0, psi) 
+            cdf[n] = cdf[n - 1] + single_prob(n, n0, psi) 
     return cdf
