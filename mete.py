@@ -12,12 +12,12 @@ import sys
 import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
+import mpmath as mp
 from scipy.optimize import bisect, fsolve
 from scipy.stats import logser, geom
 from numpy.random import random_integers
 from random import uniform
 from numpy import array, e, empty
-
 
 
 
@@ -776,13 +776,13 @@ def chi_bisect(i, j, n0, psi, chi_dict={}):
         key = (i, j, n0, psi)
         if key not in chi_dict:
             if j == 1: 
-                chi_dict[key] = single_prob(0, 1, n0, 2 ** i, psi) * (
+                chi_dict[key] = single_prob(0, 1, n0, 2, psi) * (
                                 sum(map(lambda m: get_lambda_bisect(i - 1, m, psi) *
                                                   get_lambda_bisect(i - 1, n0 - m, psi), range(1, n0))))
             else:
                 i -= 1
                 j -= 1
-                chi_dict[key] = single_prob(0, 1, n0, 2 ** i, psi) * (
+                chi_dict[key] = single_prob(0, 1, n0, 2, psi) * (
                                 sum(map(lambda m: chi_bisect(i, j, m, psi, chi_dict), range(2, n0 + 1))))
         out = chi_dict[key]
     return(out)
@@ -1089,7 +1089,6 @@ def order(num_list):
                 swapped = True
     return index_list
 
-
 def single_rvs(n0, psi, size=1):
     """Generate random deviates from the single division model, still 
     is not working properly possibily needs to be checked"""
@@ -1102,28 +1101,24 @@ def single_rvs(n0, psi, size=1):
         xvals[i] = [j for j in range(0,len(ordered_values)) if ordered_values[j] == (n0 + 1)][0]
     return xvals 
 
-def getF(a, n):
+def get_F(a, n):
     """ 
     Eq. 7 in Conlisk et al. (2007)
-    this is a computationaly efficient way to compute 
     gamma(a + n) / (gamma(a) * gamma(n + 1))
     """
-    out = 1  
-    if n != 0:
-        for i in range(1, n + 1):
-            out *= (a + i - 1) / i  
-    return out 
+    return mp.gamma(a + n) / (mp.gamma(a) * mp.gamma(n + 1))
 
-def single_prob(n, A, n0, A0, psi):
+def single_prob(n, n0, psi, c=2):
     """
     Eq. 1.3 in Conlisk et al. (2007), note that this implmentation is
     only correct when the variable c = 2 
     Note: if psi = .5 this is the special HEAP case in which the
     function no longer depends on n.
+    c = number of cells
     """
     a = (1 - psi) / psi 
-    return (getF(a, n) * getF(a, n0 - n)) / getF(2 * a, n0) 
-
+    F = (get_F(a, n) * get_F((c - 1) * a, n0 - n)) / get_F(c * a, n0) 
+    return float(F)
 
 def single_cdf(A, n0, A0, psi):
     cdf = [0.0] * (n0 + 1) 
