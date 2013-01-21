@@ -776,14 +776,14 @@ def chi_bisect(i, j, n0, psi, chi_dict={}):
         key = (i, j, n0, psi)
         if key not in chi_dict:
             if j == 1: 
-                chi_dict[key] = single_prob(0, n0, psi) * (
-                                sum(map(lambda m: get_lambda_bisect(i - 1, m, psi) *
-                                                  get_lambda_bisect(i - 1, n0 - m, psi), range(1, n0))))
+                chi_dict[key] = sum(map(lambda m: single_prob(m, n0, psi) *
+                                                  get_lambda_bisect(i - 1, m, psi) *  
+                                                  get_lambda_bisect(i - 1, n0 - m, psi), range(1, n0)))
             else:
                 i -= 1
                 j -= 1
-                chi_dict[key] = single_prob(0, n0, psi) * (
-                                sum(map(lambda m: chi_bisect(i, j, m, psi, chi_dict), range(2, n0 + 1))))
+                chi_dict[key] = sum(map(lambda m: single_prob(m, n0, psi) *
+                                                  chi_bisect(i, j, m, psi, chi_dict) , range(2, n0 + 1)))
         out = chi_dict[key]
     return(out)
 
