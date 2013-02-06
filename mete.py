@@ -710,6 +710,7 @@ def get_lambda_heap(i, n0):
     """
     Probability of observing at least one individual of a species with n0 individuals
     given a randomly sampled quadrat of area A out of a total area A0.     
+    This function uses the iterative or HEAP scaling model  
     Harte 2007, Scaling Biodiveristy Chp. Eq. 6.4, pg.106 
     i: number of bisections
     n0: abundance
@@ -720,6 +721,21 @@ def get_lambda_heap(i, n0):
         A0 = 2 ** i
         lambda_heap = 1 - heap_prob(0, 1, n0, A0)
     return(lambda_heap)
+
+def get_lambda_mete(i, n0): 
+    """
+    Probability of observing at least one individual of a species with n0 individuals
+    given a randomly sampled quadrat of area A out of a total area A0.
+    This function uses the non-iterative scaling model
+    i: number of bisections
+    n0: abundance
+    """
+    if i == 0:
+        lambda_mete = 1
+    if i != 0:
+        A0 = 2 ** i
+        lambda_mete = 1 - get_mete_Pi(0, 1, n0, A0)
+    return(lambda_mete)
 
 def get_lambda_bisect(i, n0, psi): 
     """
