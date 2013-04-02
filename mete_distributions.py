@@ -87,3 +87,52 @@ class psi_epsilon:
         def mom_1(x):
             return x * self.pdf(x)
         return float(mpmath.quad(mom_1, [self.a, self.b]))
+
+class theta_epsilon:
+    """Intraspecific energy/mass distribution predicted by METE (Eqn 7.25)
+    
+    lower truncated at 1 and upper truncated at E0.
+    
+    Methods:
+    pdf - probability density function
+    cdf - cumultaive density function
+    ppf - inverse cdf
+    rvs - random number generator
+    E - first moment (mean)
+    
+    """
+    def __init__(self, S0, N0, E0):
+        self.a, self.b = 1, E0
+        self.beta = get_beta(S0, N0)
+        self.lambda2 = get_lambda2(S0, N0, E0)
+        self.lambda1 = self.beta - self.lambda2
+        self.sigma = self.beta + (E0 - 1) * self.lambda2
+ 
+    def pdf(self, x, n):
+        pdf = self.lambda2 * n * exp(-(self.lambda1 + 
+                                       self.lambda2 * x) * n) / (exp(-self.beta * n) - 
+                                                                 exp(-self.sigma * n))
+        return pdf
+
+    def cdf(self, x, n):
+        def pdf_n(x):
+            return self.pdf(x, n)
+        cdf = mpmath.quad(pdf_n, [1, x])
+        return float(cdf) 
+    
+    def ppf(self, n, q):
+        y = lambda t: self.cdf(t, n) - q
+        x = bisect(y, self.a, self.b, xtol = 1.490116e-08)
+        return x
+    
+    def rvs(self, n, size):
+        out = []
+        rand_list = uniform.rvs(size = size)
+        for rand_num in rand_list:
+            out.append(self.ppf(n, rand_num))
+        return out
+        
+    def E(self, n):
+        def mom_1(x):
+            return x * self.pdf(x, n)
+        return float(mpmath.quad(mom_1, [self.a, self.b]))
