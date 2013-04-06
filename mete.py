@@ -1003,7 +1003,7 @@ def sim_spatial_whole(S, N, bisec, transect=False, abu=None, beta=None):
     Output: a list of lists, each sublist contains species abundance in one
     cell, and x-y coordinate of the cell.
    
-    Note: bisection number 1 corresponds to first bisection which is along the x-axis
+    Note: bisection number 1 corresponds to first bisection which intersects the x-axis
     
     """
     if S == 1:
