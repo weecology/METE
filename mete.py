@@ -319,7 +319,7 @@ def get_mete_Pi(n, A, n0, A0):
     mete_Pi = x ** n / Z_Pi
     return mete_Pi
 
-def calc_S_from_Pi(A, A0, S0, N0):
+def calc_S_from_Pi(A, A0, S0, N0, endemic_only=False):
     """ 
     Downscales the expected number of species using the non-interative approach
     Harte 2011 equ C.1
@@ -334,17 +334,20 @@ def calc_S_from_Pi(A, A0, S0, N0):
     The expected number of species inferred from the anchor scale
     """
     beta = get_beta(S0, N0)
-    def calc_prob_joint(beta, n, A, A0):
-        prob_occur = 1 - get_mete_Pi(0, A, n, A0)
+    def calc_prob_joint(beta, n, A, A0, endemic_only):
+        if endemic_only: 
+            prob_occur = get_mete_Pi(n, A, n, A0)
+        else:
+            prob_occur = 1 - get_mete_Pi(0, A, n, A0)
         ## Eq. 7.32 in Harte 2009
         prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))
         prob_joint = prob_n_indiv * prob_occur
         return prob_joint
-    prob_of_occurrence = [calc_prob_joint(beta, n, A, A0) for n in range(1, N0 + 1)]
+    prob_of_occurrence = [calc_prob_joint(beta, n, A, A0, endemic_only) for n in range(1, N0 + 1)]
     S = S0 * sum(prob_of_occurrence)
     return S
 
-def calc_S_from_Pi_fixed_abu(A, A0, n0vals):
+def calc_S_from_Pi_fixed_abu(A, A0, n0vals, endemic_only=False):
     """ 
     Downscales the expected number of species using the non-interative approach
     Harte 2011 when the abundances are fixed, equ 3.12
@@ -358,13 +361,16 @@ def calc_S_from_Pi_fixed_abu(A, A0, n0vals):
     Returns:
     The expected number of species inferred from the anchor scale
     """
-    prob_of_occurrence = [1 - get_mete_Pi(0, A, n0, A0) for n0 in n0vals]
+    if endemic_only:
+        prob_of_occurrence = [get_mete_Pi(n0, A, n0, A0) for n0 in n0vals]
+    else: 
+        prob_of_occurrence = [1 - get_mete_Pi(0, A, n0, A0) for n0 in n0vals]
     S = sum(prob_of_occurrence)
     return S
 
-def sar_noniterative(Avals, A0, S0, N0):
+def sar_noniterative(Avals, A0, S0, N0, endemic_only=False):
     """ Computes the downscaled METE noninterative species-area relationship (SAR)
-    Harte 2011 equ C.1\
+    Harte 2011 equ C.1
     
     Arguments:
     Avals: the spatial scales of interest, must be greater than zero and less than A0;
@@ -380,7 +386,7 @@ def sar_noniterative(Avals, A0, S0, N0):
     if False in A_ok:
         print "Warning: will only compute S for Areas that are greater than zero and less than A0"
         Avals  = [Avals[i] for i in which(A_ok)]
-    Svals = [calc_S_from_Pi(A, A0, S0, N0) for A in Avals]
+    Svals = [calc_S_from_Pi(A, A0, S0, N0, endemic_only) for A in Avals]
     Svals.append(S0)
     Avals.append(A0)
     out = list()
@@ -388,14 +394,14 @@ def sar_noniterative(Avals, A0, S0, N0):
     out.append(Svals)
     return out
 
-def sar_noniterative_fixed_abu(Avals, A0, n0vals):
+def sar_noniterative_fixed_abu(Avals, A0, n0vals, endemic_only=False):
     """Predictions for the downscaled METE SAR using Eq. 3.12 from Harte 2011 when the  
     abundances (n0) are fixed"""
     A_ok = [i > 0 and i < A0 for i in Avals]
     if False in A_ok:
         print "Warning: will only compute S for Areas that are greater than zero and less than A0"
         Avals  = [Avals[i] for i in which(A_ok)]
-    Svals = [calc_S_from_Pi_fixed_abu(A, A0, n0vals) for A in Avals]
+    Svals = [calc_S_from_Pi_fixed_abu(A, A0, n0vals, endemic_only) for A in Avals]
     Svals.append(len(n0vals))
     Avals.append(A0)
     out = list()
@@ -459,20 +465,97 @@ def get_mete_sad_geom(S, N):
         abundance[i] = int(round(bisect(y, 0, N)))
     return (abundance, p)
 
-def downscale_sar(A, S, N, Amin):
-    """Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009"""
+def downscale_sar(A, S, N, Amin, endemic_only=False, approx=False):
+    """
+    Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009 which is identical to
+    Eq. 7.64 of Harte 2011
+    
+    Note: if endemic_only = True the Endemic Area Relationship (EAR) is computed instead
+    of the SAR
+    
+    The formula for the EAR is Eq. 11 Harte et al. 2008 or Eq. 3.14 in Harte 2011
+    """
     beta = get_beta(S, N)
     x = exp(-beta)
-    S = S / x - N * (1 - x) / (x - x ** (N + 1)) * (1 - x ** N / (N + 1))
+    if endemic_only:
+        flag = 0
+        A0 = A
+        Avals = []
+        while flag == 0:
+            A /= 2        
+            if (A >= Amin):
+                Avals.append(A)       
+            else:
+                flag = 1
+        Avals.reverse()
+        if approx:
+            S = [(A * S) / (A0 * log(1 / beta)) for A in Avals]
+        else: 
+            n0vals = range(1, N + 1) 
+            ## this is not technically correct b/c it does not consider the downscaling of the SAD
+            S = [S * sum([heap_prob(n0, A, n0, A0) * exp(-beta * n0) / (n0 * log(beta ** -1)) for n0 in n0vals]) for A in Avals]
+        return (Avals, S)
+    else:
+        S = S / x - N * (1 - x) / (x - x ** (N + 1)) * (1 - x ** N / (N + 1))
+        A /= 2
+        N /= 2
+        if A <= Amin:
+            return ([A], [S])
+        else:
+            down_scaled_data = downscale_sar(A, S, N, Amin, endemic_only, approx)
+        return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
+
+def downscale_ear(A, S, N, Amin):
+    beta = get_beta(S, N)
+    flag = 0
+    A0 = A
+    Avals = []
+    while flag == 0:
+        A /= 2        
+        if (A >= Amin):
+            Avals.append(A)       
+        else:
+            flag = 1
+    Avals.reverse()
+    S = [S / log(1/beta) * sum([(exp(-beta * n) / n) * (A0 / (n * A + A0)) * ((n*A) / (n*A + A0)) ** n for n in range(1, N + 1)]) for A in Avals]
+    return([Avals], [S])
+
+def downscale_ear2(A, S, N, Amin):
+    sar = downscale_sar(A, S, N, Amin)
+    S = []    
+    for i in range(0, len(sar[0]) - 1):
+        S.append(sar[1][i + 1] - sar[1][i])
+    S.reverse
+    return(sar[0], S)
+    
+def downscale_sar2(A, S, N, Amin, endemic_only=False):
+    """
+    Predictions for downscaled SAR using Eq. 7 from Harte et al. 2009 which is identical to
+    Eq. 7.64 of Harte 2011
+    
+    Note: if endemic_only = True the Endemic Area Relationship (EAR) is computed instead
+    of the SAR
+    
+    The formula for the EAR is Eq. 11 Harte et al. 2008 or Eq. 3.14 in Harte 2011
+    """
+    beta = get_beta(S, N)
+    x = exp(-beta)
+    if endemic_only:
+        n0vals = range(1, int(round(N)) + 1)  
+        S = S * sum([(1 - heap_prob(0, A/2, n0, A)) * exp(-beta * n0) / (n0 * log(beta ** -1)) for n0 in n0vals])
+        #S = S * sum([heap_prob(n0, A/2, n0, A) * exp(-beta * n0) / (n0 * log(beta ** -1)) for n0 in n0vals])
+    else:
+        S = S / x - N * (1 - x) / (x - x ** (N + 1)) * (1 - x ** N / (N + 1))
     A /= 2
     N /= 2
     if A <= Amin:
         return ([A], [S])
     else:
-        down_scaled_data = downscale_sar(A, S, N, Amin)
-        return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
+        down_scaled_data = downscale_sar2(A, S, N, Amin, endemic_only)
+    return (down_scaled_data[0] + [A], down_scaled_data[1] + [S])
 
-def downscale_sar_fixed_abu(A0, n0vals, Amin):
+
+def downscale_sar_fixed_abu(A0, n0vals, Amin, endemic_only=False):
     """Predictions for downscaled SAR when abundance is fixed using the iterative approach
     by combining Eq. 7.51 and Eq. 3.12 from Harte 2011"""
     flag = 0
@@ -485,7 +568,10 @@ def downscale_sar_fixed_abu(A0, n0vals, Amin):
         else:
             flag = 1
     Avals.reverse()
-    Svals = [sum([1 - heap_prob(0, A, n0, A0) for n0 in n0vals]) for A in Avals]
+    if endemic_only:
+        Svals = [sum([heap_prob(n0, A, n0, A0) for n0 in n0vals]) for A in Avals]
+    else:
+        Svals = [sum([1 - heap_prob(0, A, n0, A0) for n0 in n0vals]) for A in Avals]
     S0 = len(n0vals)
     Svals.append(S0)
     Avals.append(A0)
