@@ -319,7 +319,7 @@ def get_mete_Pi(n, A, n0, A0):
     mete_Pi = x ** n / Z_Pi
     return mete_Pi
 
-def calc_S_from_Pi(A, A0, S0, N0):
+def calc_S_from_Pi(A, A0, S0, N0, version='approx'):
     """ 
     Downscales the expected number of species using the non-interative approach
     Harte 2011 equ C.1
@@ -329,18 +329,24 @@ def calc_S_from_Pi(A, A0, S0, N0):
     A0 = the maximum spatial scale under consideration;
     S0 = the total number of species that occurs in A0
     N0 = the total number of individuals that occurs in A0
+    version = 'approx' or 'precise' depending on how the SAD is handled
 
     Returns:
     The expected number of species inferred from the anchor scale
-    """
+    """    
     beta = get_beta(S0, N0)
-    def calc_prob_joint(beta, n, A, A0):
+    if beta < 0 and version == 'approx': 
+        print("ERROR! Cannot compute log of a negative beta value, change version to precise")
+    def calc_prob_joint(beta, n, A, A0, N0, version):        
         prob_occur = 1 - get_mete_Pi(0, A, n, A0)
         ## Eq. 7.32 in Harte 2009
-        prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))
+        if version == 'approx':
+            prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))
+        if version == 'precise':
+            prob_n_indiv = trunc_logser_pmf(n, exp(-beta), N0) 
         prob_joint = prob_n_indiv * prob_occur
         return prob_joint
-    prob_of_occurrence = [calc_prob_joint(beta, n, A, A0) for n in range(1, N0 + 1)]
+    prob_of_occurrence = [calc_prob_joint(beta, n, A, A0, N0, version) for n in range(1, N0 + 1)]
     S = S0 * sum(prob_of_occurrence)
     return S
 
@@ -362,7 +368,7 @@ def calc_S_from_Pi_fixed_abu(A, A0, n0vals):
     S = sum(prob_of_occurrence)
     return S
 
-def sar_noniterative(Avals, A0, S0, N0):
+def sar_noniterative(Avals, A0, S0, N0, version='approx'):
     """ Computes the downscaled METE noninterative species-area relationship (SAR)
     Harte 2011 equ C.1\
     
@@ -380,7 +386,7 @@ def sar_noniterative(Avals, A0, S0, N0):
     if False in A_ok:
         print "Warning: will only compute S for Areas that are greater than zero and less than A0"
         Avals  = [Avals[i] for i in which(A_ok)]
-    Svals = [calc_S_from_Pi(A, A0, S0, N0) for A in Avals]
+    Svals = [calc_S_from_Pi(A, A0, S0, N0, version) for A in Avals]
     Svals.append(S0)
     Avals.append(A0)
     out = list()
