@@ -319,37 +319,6 @@ def get_mete_Pi(n, A, n0, A0):
     mete_Pi = x ** n / Z_Pi
     return mete_Pi
 
-def calc_S_from_Pi(A, A0, S0, N0, version='approx'):
-    """ 
-    Downscales the expected number of species using the non-interative approach
-    Harte 2011 equ C.1
-    
-    Arguments:
-    A = the spatial scale of interest;
-    A0 = the maximum spatial scale under consideration;
-    S0 = the total number of species that occurs in A0
-    N0 = the total number of individuals that occurs in A0
-    version = 'approx' or 'precise' depending on how the SAD is handled
-
-    Returns:
-    The expected number of species inferred from the anchor scale
-    """    
-    beta = get_beta(S0, N0)
-    if beta < 0 and version == 'approx': 
-        print("ERROR! Cannot compute log of a negative beta value, change version to precise")
-    def calc_prob_joint(beta, n, A, A0, N0, version):        
-        prob_occur = 1 - get_mete_Pi(0, A, n, A0)
-        ## Eq. 7.32 in Harte 2009
-        if version == 'approx':
-            prob_n_indiv = exp(-beta * n) / (n * log(beta ** -1))
-        if version == 'precise':
-            prob_n_indiv = trunc_logser_pmf(n, exp(-beta), N0) 
-        prob_joint = prob_n_indiv * prob_occur
-        return prob_joint
-    prob_of_occurrence = [calc_prob_joint(beta, n, A, A0, N0, version) for n in range(1, N0 + 1)]
-    S = S0 * sum(prob_of_occurrence)
-    return S
-
 def calc_S_from_Pi_fixed_abu(A, A0, n0vals):
     """ 
     Downscales the expected number of species using the non-interative approach
@@ -364,8 +333,7 @@ def calc_S_from_Pi_fixed_abu(A, A0, n0vals):
     Returns:
     The expected number of species inferred from the anchor scale
     """
-    prob_of_occurrence = [1 - get_mete_Pi(0, A, n0, A0) for n0 in n0vals]
-    S = sum(prob_of_occurrence)
+
     return S
 
 def sar_noniterative(Avals, A0, S0, N0, version='approx'):
@@ -377,6 +345,8 @@ def sar_noniterative(Avals, A0, S0, N0, version='approx'):
     A0 = the maximum spatial scale under consideration;
     S0 = the total number of species in A0;
     N0 = the total number of individuals in A0;
+    version = 'approx' or 'precise', which specifies if an approximation is used for the pdf
+    of the SAD or if the precise truncated log-series form is used instead. 
     
     Returns:
     A numpy array the first row contains the Avals, and the second row contains the expected
@@ -386,7 +356,15 @@ def sar_noniterative(Avals, A0, S0, N0, version='approx'):
     if False in A_ok:
         print "Warning: will only compute S for Areas that are greater than zero and less than A0"
         Avals  = [Avals[i] for i in which(A_ok)]
-    Svals = [calc_S_from_Pi(A, A0, S0, N0, version) for A in Avals]
+    beta = get_beta(S0, N0)
+    if beta < 0 and version == 'approx': 
+        print("ERROR! Cannot compute log of a negative beta value, change version to precise")    
+    ## compute relative abundance distribution
+    if version == 'approx':
+        rad = [exp(-beta * n) / (n * log(beta ** -1)) for n in range(1, N0 + 1)]
+    if version == 'precise':
+        rad = [trunc_logser_pmf(n, exp(-beta), N0) for n in range(1, N0 + 1)]
+    Svals = [S0 * sum([(1 - get_mete_Pi(0, A, n, A0)) * rad[n - 1] for n in range(1, N0 + 1)]) for A in Avals]
     Svals.append(S0)
     Avals.append(A0)
     out = list()
@@ -401,7 +379,7 @@ def sar_noniterative_fixed_abu(Avals, A0, n0vals):
     if False in A_ok:
         print "Warning: will only compute S for Areas that are greater than zero and less than A0"
         Avals  = [Avals[i] for i in which(A_ok)]
-    Svals = [calc_S_from_Pi_fixed_abu(A, A0, n0vals) for A in Avals]
+    Svals = [sum([1 - get_mete_Pi(0, A, n0, A0) for n0 in n0vals]) for A in Avals]
     Svals.append(len(n0vals))
     Avals.append(A0)
     out = list()
