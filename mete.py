@@ -315,7 +315,7 @@ def get_mete_Pi(n, A, n0, A0):
     of area A out of A0
     """
     x = exp(-get_lambda_spatialdistrib(A, A0, n0))
-    Z_Pi = (1 - x ** (n0 + 1)) / (1 - x)
+    Z_Pi = sum([x ** i for i in range(0, n0 + 1)])    
     mete_Pi = x ** n / Z_Pi
     return mete_Pi
 
