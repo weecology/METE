@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name = 'mete',
-      version= '0.1',
+      version= '0.2dev',
       description = 'Tools for analying the Maximum Entropy Theory of Ecology',
       author = "Ethan White, Dan McGlinn, Xiao Xiao, Sarah Supp, and Katherine Thibault",
       url = 'https://github.com/weecology/mete',
