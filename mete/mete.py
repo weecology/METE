@@ -387,7 +387,7 @@ def sar_noniterative_fixed_abu(Avals, A0, n0vals):
     out.append(Svals)
     return out
 
-def get_mete_rad(S, N, beta=None, beta_dict={}):
+def get_mete_rad(S, N, beta=None, version='precise', beta_dict={}):
     """Use beta to generate SAD predicted by the METE
     
     Keyword arguments:
@@ -402,7 +402,7 @@ def get_mete_rad(S, N, beta=None, beta_dict={}):
     assert S/N < 1, "N must be greater than S"
     
     if beta is None:
-        beta = get_beta(S, N, beta_dict=beta_dict)
+        beta = get_beta(S, N, version='precise', beta_dict=beta_dict)
     p = e ** -beta
     abundance  = list(empty([S]))
     rank = range(1, int(S)+1)
