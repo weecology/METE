@@ -402,7 +402,7 @@ def get_mete_rad(S, N, beta=None, version='precise', beta_dict={}):
     assert S/N < 1, "N must be greater than S"
     
     if beta is None:
-        beta = get_beta(S, N, version='precise', beta_dict=beta_dict)
+        beta = get_beta(S, N, version=version, beta_dict=beta_dict)
     p = e ** -beta
     abundance  = list(empty([S]))
     rank = range(1, int(S)+1)
@@ -420,6 +420,52 @@ def get_mete_rad(S, N, beta=None, version='precise', beta_dict={}):
             y = lambda x: logser.cdf(x,p) / logser.cdf(N,p) - (rank[i]-0.5) / S
             abundance[i] = int(round(bisect(y, 0, N)))
     return (abundance, p)
+
+def get_mete_rad_largeN(S, N, beta=None, version='untruncated', beta_dict={}):
+    """Alternative method to obtain the RAD predicted by METE.
+    
+    This function is guaranteed to return a result when beta is available (or 
+    can be obtained), and is recommended for situations when get_mete_rad() fails (which
+    generally happens when N is too big). It is equivalent to get_mete_rad() when the version arguments
+    are identical.
+    
+    Keyword arguments:
+    S -- the number of species
+    N -- the total number of individuals
+    beta -- allows input of beta by user if it has already been calculated
+    
+    """
+    
+    assert S > 1, "S must be greater than 1"
+    assert N > 0, "N must be greater than 0"
+    assert S/N < 1, "N must be greater than S"
+    
+    if beta is None:
+        beta = get_beta(S, N, version=version, beta_dict=beta_dict)
+    p = e ** -beta
+    
+    cdf_N = 0
+    for i in range(1, int(N + 1)):
+        cdf_N += -1 / log(1 - p) * p ** i / i
+        
+    abundance  = list(empty([S]))
+    rank = range(1, int(S)+1)
+    cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
+    
+    j = 0
+    cdf_1 = -1 / log(1 - p) * p / cdf_N #cdf(1, p), a.k.a. pmf(1, p)
+    while cdf_obs[j] <= cdf_1:
+        abundance[j] = 1
+        j += 1
+    cdf_cum = 0 # Obtain the cdf at each x by manually adding up pmf
+    for i in range(1, int(N + 1)):
+        cdf_cum += -1 / log(1 - p) * p ** i / i / cdf_N
+        while cdf_cum >= cdf_obs[j]:
+            abundance[j] = i
+            j += 1
+            if j == S:
+                abundance.reverse()
+                return (abundance, p)
 
 def get_mete_sad_geom(S, N):
     """METE's predicted RAD when the only constraint is N/S
