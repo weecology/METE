@@ -424,22 +424,18 @@ def get_mete_rad(S, N, beta=None, version='precise', beta_dict={}):
     
     else:
         cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
-        cdf_N = 0
-        for i in range(1, int(N + 1)):
-            cdf_N += -1 / log(1 - p) * p ** i / i
+        i_list = np.arange(1, int(N + 1))
+        cdf_N = -1 / log(1 - p) * sum(p ** i_list / i_list)
         j = 0
-        cdf_1 = -1 / log(1 - p) * p / cdf_N #cdf(1, p), a.k.a. pmf(1, p)
-        while cdf_obs[j] <= cdf_1:
-            abundance[j] = 1
-            j += 1
         cdf_cum = 0 #Obtain the cdf at each x by manually adding up pmf
-        for i in range(1, int(N + 1)):
+        for i in i_list:
             cdf_cum += -1 / log(1 - p) * p ** i / i / cdf_N
             while cdf_cum >= cdf_obs[j]: 
                 abundance[j] = i
                 j += 1
                 if j == S:
                     abundance.reverse()
+                    del i_list
                     return (abundance, p)
 
 def get_mete_sad_geom(S, N):
