@@ -424,19 +424,21 @@ def get_mete_rad(S, N, beta=None, version='precise', beta_dict={}):
     
     else:
         cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
-        i_list = np.arange(1, int(N + 1))
-        cdf_N = -1 / log(1 - p) * sum(p ** i_list / i_list)
+        cdf_N = logser.cdf(N, p)
         j = 0
         cdf_cum = 0 #Obtain the cdf at each x by manually adding up pmf
-        for i in i_list:
+                    #instead of using bisect() to avoid calculting cdf 
+                    #over and over again
+        i = 1
+        while i <= N + 1:
             cdf_cum += -1 / log(1 - p) * p ** i / i / cdf_N
             while cdf_cum >= cdf_obs[j]: 
                 abundance[j] = i
                 j += 1
                 if j == S:
                     abundance.reverse()
-                    del i_list
                     return (abundance, p)
+            i += 1
 
 def get_mete_sad_geom(S, N):
     """METE's predicted RAD when the only constraint is N/S
