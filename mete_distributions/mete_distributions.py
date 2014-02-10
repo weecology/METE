@@ -3,8 +3,8 @@
 from __future__ import division
 import numpy as np
 import mpmath
+import scipy
 from scipy.stats import logser, geom, rv_discrete, rv_continuous
-from scipy.stats.distributions import uniform
 from scipy.optimize import bisect
 from math import exp
 from mete import *
@@ -78,7 +78,7 @@ class psi_epsilon:
     
     def rvs(self, size):
         out = []
-        rand_list = uniform.rvs(size = size)
+        rand_list = scipy.stats.uniform.rvs(size = size)
         for rand_num in rand_list:
             out.append(self.ppf(rand_num))
         return out
@@ -127,7 +127,7 @@ class theta_epsilon:
     
     def rvs(self, n, size):
         out = []
-        rand_list = uniform.rvs(size = size)
+        rand_list = scipy.stats.uniform.rvs(size = size)
         for rand_num in rand_list:
             out.append(self.ppf(n, rand_num))
         return out
