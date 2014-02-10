@@ -8,6 +8,7 @@ from scipy.stats import logser, geom, rv_discrete, rv_continuous
 from scipy.optimize import bisect
 from math import exp
 from mete import *
+from macroeco_distributions import *
 
 class trunc_logser_gen(rv_discrete):
     """Upper truncated logseries distribution
@@ -82,7 +83,7 @@ class psi_epsilon:
         for rand_num in rand_list:
             out.append(self.ppf(rand_num))
         return out
-        
+    
     def E(self):
         def mom_1(x):
             return x * self.pdf(x)
@@ -127,9 +128,11 @@ class theta_epsilon:
     
     def rvs(self, n, size):
         out = []
-        rand_list = scipy.stats.uniform.rvs(size = size)
-        for rand_num in rand_list:
-            out.append(self.ppf(n, rand_num))
+        for i in range(size):
+            rand_exp = trunc_expon.rvs(self.lambda2 * n, 1)
+            while rand_exp > self.b:
+                rand_exp = trunc_expon.rvs(self.lambda2 * n, 1)
+            out.append(rand_exp)
         return out
         
     def E(self, n):
