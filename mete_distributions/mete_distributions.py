@@ -1,14 +1,14 @@
 """Distributions for use with METE"""
 
 from __future__ import division
+from macroeco_distributions import *
+from mete import *
 import numpy as np
 import mpmath
 import scipy
 from scipy.stats import logser, geom, rv_discrete, rv_continuous
 from scipy.optimize import bisect
 from math import exp
-from mete import *
-from macroeco_distributions import *
 
 class trunc_logser_gen(rv_discrete):
     """Upper truncated logseries distribution
