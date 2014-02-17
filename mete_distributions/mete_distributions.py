@@ -9,7 +9,8 @@ import scipy
 from scipy.stats import logser, geom, rv_discrete, rv_continuous
 from scipy.optimize import bisect
 from math import exp
-
+from mete_psi_integration import get_integral_for_psi_cdf
+                                      
 class trunc_logser_gen(rv_discrete):
     """Upper truncated logseries distribution
     
@@ -70,13 +71,15 @@ class psi_epsilon:
                               #(N0 + exp_neg_gamma / (1 - exp_neg_gamma)))
 
     def cdf(self, x):
-        return float(mpmath.quad(self.pdf, [self.a, x]))
-    
+        int_start = exp(-self.beta)
+        int_end = exp(-(self.beta + (x - 1) * self.lambda2))
+        return self.norm_factor / self.lambda2 * (1 / (1 - int_start) - 1 / (1 - int_end) + \
+                                                  float(get_integral_for_psi_cdf(x, self.beta, self.lambda2, self.N0)))
     def ppf(self, q):
         y = lambda t: self.cdf(t) - q
         x = bisect(y, self.a, self.b, xtol = 1.490116e-08)
         return x
-    
+        
     def rvs(self, size):
         out = []
         rand_list = scipy.stats.uniform.rvs(size = size)
