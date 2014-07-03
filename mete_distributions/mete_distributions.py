@@ -63,8 +63,11 @@ class psi_epsilon:
 
     def pdf(self, x):
         exp_neg_gamma = exp(-(self.beta + (x - 1) * self.lambda2))
-        return self.norm_factor * exp_neg_gamma * (1 - (self.N0 + 1) * exp_neg_gamma ** self.N0 +
-                                              self.N0 * exp_neg_gamma ** (self.N0 + 1)) / (1 - exp_neg_gamma) ** 2
+        if x < 1:
+            return 0
+        else:
+            return self.norm_factor * exp_neg_gamma * (1 - (self.N0 + 1) * exp_neg_gamma ** self.N0 +
+                                                  self.N0 * exp_neg_gamma ** (self.N0 + 1)) / (1 - exp_neg_gamma) ** 2
         #Below is the exact form of equation 7.24, which seems to contain an error: 
         #return norm_factor * (exp_neg_gamma / (1 - exp_neg_gamma) ** 2 - 
                               #exp_neg_gamma ** N0 / (1 - exp_neg_gamma) *
