@@ -119,7 +119,12 @@ class theta_epsilon:
                                        self.lambda2 * x) * n) / (exp(-self.beta * n) - 
                                                                  exp(-self.sigma * n))
         return pdf
-
+    
+    def logpdf(self, x, n):
+        logpdf = np.log(self.lambda2) + np.log(n) - (self.lambda1 + self.lambda2 * x) * n - \
+            np.log(exp(-self.beta * n) - exp(-self.sigma * n))
+        return logpdf
+    
     def cdf(self, x, n):
         def pdf_n(x):
             return self.pdf(x, n)
