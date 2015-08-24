@@ -15,14 +15,14 @@ def get_lambdas(G, S, N, E, version = 'precise'):
         y2 = lambda x: x * np.log(x) - N / G # here x is 1 / beta
         inv_1 = fsolve(y1, 1)[0]
         inv_beta = fsolve(y2, 1)[0]
-        return([1/inv_1, 1/inv_2, lambda3])
+        return([1/inv_1, 1/inv_beta, lambda3])
     else:
         def lambdas(x):
             exp_1, exp_beta = x # The two elements are exp(-lambda1), and exp(-beta)
             Slist = range(1, S + 1)
             f1 = np.sum(exp_1 ** Slist * np.log(1 / (1 - exp_beta ** Slist))) / np.sum(exp_1 ** Slist / Slist * np.log(1 / (1 - exp_beta ** Slist))) - S / G 
-            f2 = np.sum((exp_1 * exp_beta) ** Slist / (1 - exp_beta ** Slist)) * np.sum(exp_1 ** Slist / Slist * np.log(1 / (1 - exp_beta ** Slist))) - N / G
+            f2 = np.sum((exp_1 * exp_beta) ** Slist / (1 - exp_beta ** Slist)) / np.sum(exp_1 ** Slist / Slist * np.log(1 / (1 - exp_beta ** Slist))) - N / G
             return(f1, f2)
-        exp_1, exp_beta = fsolve(lambdas, np.array((np.exp(-1 / inv_1), np.exp(-1 / inv_beta))), factor = 0.1, maxfev = 500, xtol = 10 ** -15)
+        exp_1, exp_beta = fsolve(lambdas, np.array((np.exp(-1 / inv_1), np.exp(-1 / inv_beta))), factor = 0.1, maxfev = 500)
         return ([-np.log(exp_1), -np.log(exp_beta), lambda3])
         
