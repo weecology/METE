@@ -149,3 +149,34 @@ class theta_epsilon:
         def mom_1(x):
             return x * self.pdf(x, n)
         return float(mpmath.quad(mom_1, [self.a, self.b]))
+
+class sad_agsne_gen(rv_discrete):
+    """Upper truncated logseries distribution
+    
+    Scipy based distribution class for the truncated logseries pmf, cdf and rvs
+    
+    Usage:
+    PMF: trunc_logser.pmf(list_of_xvals, p, upper_bound)
+    CDF: trunc_logser.cdf(list_of_xvals, p, upper_bound)
+    Random Numbers: trunc_logser.rvs(p, upper_bound, size=1)
+    
+    """
+    
+    def _pmf(self, x, lambda1, beta, upper_bound):
+        ivals = np.arange(1, upper_bound + 1)
+        normalization = sum(np.exp(-lambda1 - beta * ivals) / ivals / (1 - np.exp(-lambda1 - beta * ivals)))
+        pmf = np.exp(-lambda1 - beta * x) / x / (1 - np.exp(-lambda1 - beta * x)) / normalization
+        return pmf
+    
+    def _cdf(self, x, lambda1, beta, upper_bound):
+        cdf = sum([self.pmf(t, lambda1, beta, upper_bound) for t in range(1, x + 1)])
+        return cdf
+    
+    def _argcheck(self, *args):
+        self.a = 1
+        self.b = args[2]
+        cond = (args[0] > 0) & (args[1] > 0) & (args[2] > 1)
+        return cond        
+
+sad_agsne = sad_agsne_gen(name='sad_agsne', longname='SAD of AGSNE', 
+                          shapes="lambda1, beta, upper_bound")
