@@ -3,7 +3,6 @@ import numpy as np
 from scipy.optimize import bisect, fsolve
 import mete_distributions as medis
 
-# G, S, N, E = [10, 20, 200, 1000]
 def get_agsne_lambdas(G, S, N, E, version = 'precise'):
     """Obtain the Lagrange multipliers lambda 1, beta (lambda 1 + lambda 2),  lambda 3 for AGSNE.
     
