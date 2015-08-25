@@ -8,7 +8,7 @@ import mpmath
 import scipy
 from scipy.stats import logser, geom, rv_discrete, rv_continuous
 from scipy.optimize import bisect
-from math import exp
+from math import exp, log
 from mete_psi_integration import get_integral_for_psi_cdf
                                       
 class trunc_logser_gen(rv_discrete):
@@ -228,3 +228,53 @@ class psi_agsne:
         for rand_num in rand_list:
             out.append(self.ppf(rand_num))
         return np.array(out)
+
+class theta_agsne:
+    """Intraspecific energy/mass distribution predicted by AGSNE (the more precise version of S-43 in Harte et al. 2015),
+    
+    which is an exponential distribution lower truncated at 1 and upper truncated at E0.
+    
+    m, n - number of species within genus, and number of individuals within species, for a given species.
+    
+    Methods:
+    pdf - probability density function
+    cdf - cumultaive density function
+    ppf - inverse cdf
+    rvs - random number generator
+    E - first moment (mean)
+    
+    """
+    def __init__(self, statvars, pars):
+        self.a, self.b = 1, E
+        self.G, self.S, self.N, self.E = statvars
+        self.lambda1, self.beta, self.lambda3, self.z = pars
+ 
+    def pdf(self, x, m, n):
+        if self.a <= x <= self.b:
+            pdf = self.lambda3 * m * n / (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E)) * \
+                exp(-self.lambda3 * m * n * x)
+        else: pdf = 0
+        return pdf
+    
+    def cdf(self, x, m, n):
+        if self.a <= x <= self.b:
+            cdf = (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * x)) / (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E))
+        elif x < self.a: cdf = 0
+        else: cdf = 1
+        return cdf
+    
+    def ppf(self, q, m, n):
+        ans = (-1/self.lambda3/m/n) * log(exp(-self.lambda3 * m * n) - q * (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E)))
+        return ans
+    
+    def rvs(self, size, m, n):
+        out = []
+        rand_list = scipy.stats.uniform.rvs(size = size)
+        for rand_num in rand_list:
+            out.append(self.ppf(rand_num, m, n))
+        return np.array(out)
+        
+    def expected(self, m, n):
+        ans = (exp(-self.lambda3 * m * n) * (self.lambda3 * m * n + 1) - exp(-self.lambda3 * m * n * self.E) * (self.lambda3 * m * n * self.E + 1)) / \
+            (self.lambda3 * m * n * (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E)))
+        return ans
