@@ -151,14 +151,11 @@ class theta_epsilon:
         return float(mpmath.quad(mom_1, [self.a, self.b]))
 
 class sad_agsne_gen(rv_discrete):
-    """Upper truncated logseries distribution
-    
-    Scipy based distribution class for the truncated logseries pmf, cdf and rvs
+    """SAD predicted by AGSNE. Right now only takes single input values but not a list. 
     
     Usage:
-    PMF: trunc_logser.pmf(list_of_xvals, p, upper_bound)
-    CDF: trunc_logser.cdf(list_of_xvals, p, upper_bound)
-    Random Numbers: trunc_logser.rvs(p, upper_bound, size=1)
+    pmf: sad_agsne.pmf(x, lambda1, beta, upper_bound)
+    cdf: sad_agsne.cdf(x, lambda1, beta, upper_bound)
     
     """
     
@@ -180,3 +177,54 @@ class sad_agsne_gen(rv_discrete):
 
 sad_agsne = sad_agsne_gen(name='sad_agsne', longname='SAD of AGSNE', 
                           shapes="lambda1, beta, upper_bound")
+
+class psi_agsne:
+    """ISD predicted by AGSNE, following S-40 in Harte et al. 2015, lower truncated at 1 and upper truncated at E0.
+    
+    Methods:
+    pdf - probability density function
+    cdf - cumulative density function
+    ppf - inverse cdf
+    rvs - random number generator
+    
+    Usage:
+    psi = psi_agsne([G, S, N, E], [lambda1, beta, lambda3, z])
+    psi.pdf(x)
+    psi.cdf(x)
+    psi.ppf(q) (0 <= q <= 1)
+    psi.rvs(size)
+    """
+    def __init__(self, statvar, pars):
+        self.G, self.S, self.N, self.E = statvar
+        self.a, self.b = 1, self.E
+        self.lambda1, self.beta, self.lambda3, self.z = pars
+        self.lambda2 = self.beta - self.lambda3
+        self.exp_neg_lambda1 = exp(-self.lambda1)
+        self.norm = 1 /  self.lambda3 * sum([exp(-self.lambda1 * x) * (1 / (1 - exp(-self.beta * x)) - 1 / (1 - exp(-(self.lambda2 + self.E * self.lambda3) * x))) for x in range(1, self.S + 1)])
+  
+    def pdf(self, x):
+        exp_neg_gamma = exp(-(self.lambda2 + x * self.lambda3))
+        if self.a <= x <= self.b:
+            sum_list = [m * (exp_neg_gamma *self.exp_neg_lambda1) ** m / (1 - exp_neg_gamma ** m) ** 2 for m in range(1, S + 1)]
+            return  sum(sum_list) / self.norm
+        else: return 0
+
+    def cdf(self, x):
+        unscaled_cdf = 1 /  self.lambda3 * \
+            sum([exp(-self.lambda1 * m) * (1 / (1 - exp(-self.beta * m)) - 1 / (1 - exp(-(self.lambda2 + x * self.lambda3) * m))) for m in range(1, self.S + 1)])
+        if self.a <= x <= self.b:
+            return unscaled_cdf / self.norm
+        elif x < self.a: return 0
+        else: return 1
+        
+    def ppf(self, q):
+        y = lambda t: self.cdf(t) - q
+        x = bisect(y, self.a, self.b, xtol = 1.490116e-08) 
+        return x
+    
+    def rvs(self, size):
+        out = []
+        rand_list = scipy.stats.uniform.rvs(size = size)
+        for rand_num in rand_list:
+            out.append(self.ppf(rand_num))
+        return np.array(out)
