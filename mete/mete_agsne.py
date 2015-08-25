@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-from scipy.optimize import bisect, fsolve, fmin_l_bfgs_b
+from scipy.optimize import bisect, fsolve
 import mete_distributions as medis
 
 # G, S, N, E = [10, 20, 200, 1000]
@@ -36,13 +36,13 @@ def agsne_lambda3_z(lambda1, beta, S):
     return ans
 
 def get_mete_agsne_rad(G, S, N, E, version='precise', pars = None):
-    """Use beta to generate RAD predicted by the AGSNE.
+    """Compute RAD predicted by the AGSNE.
     
     Arguments:
     G, S, N, E - state variables (number of genera, number of species, number of individuals, total metabolic rate)
     Keyword arguments:
     version - which version is used to calculate the state variables, can take 'precise' or 'approx'
-    pars - a list of Langrage multipliers [lambda1, beta, lambda3 * Z], if these are already available. 
+    pars - a list of Langrage multipliers [lambda1, beta, lambda3, Z], if these are already available. 
         If None, Langrage multipliers are calculated from get_agsne_lambdas(). 
     
     Return a list of expected abundances with length S, ranked from high to low.
@@ -50,9 +50,9 @@ def get_mete_agsne_rad(G, S, N, E, version='precise', pars = None):
     if pars is None:
         lambda1, beta, lambda3 = get_agsne_lambdas(G, S, N, E, version = version)
         lambda3z = agsne_lambda3_z(lambda1, beta, S)
-        pars = [lambda1, beta, lambda3z]
+        pars = [lambda1, beta, lambda3, lambda3z / lambda3]
 
-    lambda1, beta, lambda3z = pars
+    lambda1, beta, lambda3, z = pars
     rank = range(1, int(S)+1)
     abundance  = list(np.empty([S]))
     cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
@@ -68,3 +68,25 @@ def get_mete_agsne_rad(G, S, N, E, version='precise', pars = None):
                 return abundance
         i += 1
     
+def get_mete_agsne_isd(G, S, N, E, version='precise', pars = None):
+    """Compute the individual size at each rank in ISD predicted by AGSNE.
+    
+    Arguments:
+    G, S, N, E - state variables (number of genera, number of species, number of individuals, total metabolic rate)
+    Keyword arguments:
+    version - which version is used to calculate the state variables, can take 'precise' or 'approx'
+    pars - a list of Langrage multipliers [lambda1, beta, lambda3 * Z], if these are already available. 
+        If None, Langrage multipliers are calculated from get_agsne_lambdas(). 
+    
+    Return a list of expected abundances with length S, ranked from high to low.
+    """    
+    if pars is None:
+        lambda1, beta, lambda3 = get_agsne_lambdas(G, S, N, E, version = version)
+        lambda3z = agsne_lambda3_z(lambda1, beta, S)
+        pars = [lambda1, beta, lambda3, lambda3z / lambda3]
+
+    psi = psi_agsne([G, S, N, E], pars)
+    cdf_obs = [(i - 0.5) / N for i in range(1, int(N) + 1)]
+    isd = [psi.ppf(x) for x in cdf_obs]
+    isd.reverse()
+    return isd
