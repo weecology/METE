@@ -241,8 +241,15 @@ class theta_agsne:
     cdf - cumultaive density function
     ppf - inverse cdf
     rvs - random number generator
-    E - first moment (mean)
+    expected - first moment (mean)
     
+    Usage:
+    theta = theta _agsne([G, S, N, E], [lambda1, beta, lambda3, z])
+    theta.pdf(x, m, n)
+    theta.cdf(x, m, n)
+    theta.ppf(q, m, n) (0 <= q <= 1)
+    theta.rvs(size, m, n)
+    theta.expected(m, n)
     """
     def __init__(self, statvars, pars):
         self.a, self.b = 1, E
