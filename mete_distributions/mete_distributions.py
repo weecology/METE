@@ -8,7 +8,7 @@ import mpmath
 import scipy
 from scipy.stats import logser, geom, rv_discrete, rv_continuous
 from scipy.optimize import bisect
-from math import exp
+from math import exp, log
 from mete_psi_integration import get_integral_for_psi_cdf
                                       
 class trunc_logser_gen(rv_discrete):
@@ -149,3 +149,139 @@ class theta_epsilon:
         def mom_1(x):
             return x * self.pdf(x, n)
         return float(mpmath.quad(mom_1, [self.a, self.b]))
+
+class sad_agsne_gen(rv_discrete):
+    """SAD predicted by AGSNE. Right now only takes single input values but not a list. 
+    
+    Usage:
+    pmf: sad_agsne.pmf(x, lambda1, beta, upper_bound)
+    cdf: sad_agsne.cdf(x, lambda1, beta, upper_bound)
+    
+    """
+    
+    def _pmf(self, x, lambda1, beta, upper_bound):
+        ivals = np.arange(1, upper_bound + 1)
+        normalization = sum(np.exp(-lambda1 - beta * ivals) / ivals / (1 - np.exp(-lambda1 - beta * ivals)))
+        pmf = np.exp(-lambda1 - beta * x) / x / (1 - np.exp(-lambda1 - beta * x)) / normalization
+        return pmf
+    
+    def _cdf(self, x, lambda1, beta, upper_bound):
+        cdf = sum([self.pmf(t, lambda1, beta, upper_bound) for t in range(1, x + 1)])
+        return cdf
+    
+    def _argcheck(self, *args):
+        self.a = 1
+        self.b = args[2]
+        cond = (args[0] > 0) & (args[1] > 0) & (args[2] > 1)
+        return cond        
+
+sad_agsne = sad_agsne_gen(name='sad_agsne', longname='SAD of AGSNE', 
+                          shapes="lambda1, beta, upper_bound")
+
+class psi_agsne:
+    """ISD predicted by AGSNE, following S-40 in Harte et al. 2015, lower truncated at 1 and upper truncated at E0.
+    
+    Methods:
+    pdf - probability density function
+    cdf - cumulative density function
+    ppf - inverse cdf
+    rvs - random number generator
+    
+    Usage:
+    psi = psi_agsne([G, S, N, E], [lambda1, beta, lambda3, z])
+    psi.pdf(x)
+    psi.cdf(x)
+    psi.ppf(q) (0 <= q <= 1)
+    psi.rvs(size)
+    """
+    def __init__(self, statvar, pars):
+        self.G, self.S, self.N, self.E = statvar
+        self.a, self.b = 1, self.E
+        self.lambda1, self.beta, self.lambda3, self.z = pars
+        self.lambda2 = self.beta - self.lambda3
+        self.exp_neg_lambda1 = exp(-self.lambda1)
+        self.norm = 1 /  self.lambda3 * sum([exp(-self.lambda1 * x) * (1 / (1 - exp(-self.beta * x)) - 1 / (1 - exp(-(self.lambda2 + self.E * self.lambda3) * x))) for x in range(1, self.S + 1)])
+  
+    def pdf(self, x):
+        exp_neg_gamma = exp(-(self.lambda2 + x * self.lambda3))
+        if self.a <= x <= self.b:
+            sum_list = [m * (exp_neg_gamma *self.exp_neg_lambda1) ** m / (1 - exp_neg_gamma ** m) ** 2 for m in range(1, S + 1)]
+            return  sum(sum_list) / self.norm
+        else: return 0
+
+    def cdf(self, x):
+        unscaled_cdf = 1 /  self.lambda3 * \
+            sum([exp(-self.lambda1 * m) * (1 / (1 - exp(-self.beta * m)) - 1 / (1 - exp(-(self.lambda2 + x * self.lambda3) * m))) for m in range(1, self.S + 1)])
+        if self.a <= x <= self.b:
+            return unscaled_cdf / self.norm
+        elif x < self.a: return 0
+        else: return 1
+        
+    def ppf(self, q):
+        y = lambda t: self.cdf(t) - q
+        x = bisect(y, self.a, self.b, xtol = 1.490116e-08) 
+        return x
+    
+    def rvs(self, size):
+        out = []
+        rand_list = scipy.stats.uniform.rvs(size = size)
+        for rand_num in rand_list:
+            out.append(self.ppf(rand_num))
+        return np.array(out)
+
+class theta_agsne:
+    """Intraspecific energy/mass distribution predicted by AGSNE (the more precise version of S-43 in Harte et al. 2015),
+    
+    which is an exponential distribution lower truncated at 1 and upper truncated at E0.
+    
+    m, n - number of species within genus, and number of individuals within species, for a given species.
+    
+    Methods:
+    pdf - probability density function
+    cdf - cumultaive density function
+    ppf - inverse cdf
+    rvs - random number generator
+    expected - first moment (mean)
+    
+    Usage:
+    theta = theta _agsne([G, S, N, E], [lambda1, beta, lambda3, z])
+    theta.pdf(x, m, n)
+    theta.cdf(x, m, n)
+    theta.ppf(q, m, n) (0 <= q <= 1)
+    theta.rvs(size, m, n)
+    theta.expected(m, n)
+    """
+    def __init__(self, statvars, pars):
+        self.a, self.b = 1, E
+        self.G, self.S, self.N, self.E = statvars
+        self.lambda1, self.beta, self.lambda3, self.z = pars
+ 
+    def pdf(self, x, m, n):
+        if self.a <= x <= self.b:
+            pdf = self.lambda3 * m * n / (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E)) * \
+                exp(-self.lambda3 * m * n * x)
+        else: pdf = 0
+        return pdf
+    
+    def cdf(self, x, m, n):
+        if self.a <= x <= self.b:
+            cdf = (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * x)) / (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E))
+        elif x < self.a: cdf = 0
+        else: cdf = 1
+        return cdf
+    
+    def ppf(self, q, m, n):
+        ans = (-1/self.lambda3/m/n) * log(exp(-self.lambda3 * m * n) - q * (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E)))
+        return ans
+    
+    def rvs(self, size, m, n):
+        out = []
+        rand_list = scipy.stats.uniform.rvs(size = size)
+        for rand_num in rand_list:
+            out.append(self.ppf(rand_num, m, n))
+        return np.array(out)
+        
+    def expected(self, m, n):
+        ans = (exp(-self.lambda3 * m * n) * (self.lambda3 * m * n + 1) - exp(-self.lambda3 * m * n * self.E) * (self.lambda3 * m * n * self.E + 1)) / \
+            (self.lambda3 * m * n * (exp(-self.lambda3 * m * n) - exp(-self.lambda3 * m * n * self.E)))
+        return ans
