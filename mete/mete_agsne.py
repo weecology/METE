@@ -84,7 +84,7 @@ def get_mete_agsne_isd(G, S, N, E, version='precise', pars = None):
         lambda3z = agsne_lambda3_z(lambda1, beta, S)
         pars = [lambda1, beta, lambda3, lambda3z / lambda3]
 
-    psi = psi_agsne([G, S, N, E], pars)
+    psi = medis.psi_agsne([G, S, N, E], pars)
     cdf_obs = [(i - 0.5) / N for i in range(1, int(N) + 1)]
     isd = [psi.ppf(x) for x in cdf_obs]
     isd.reverse()
