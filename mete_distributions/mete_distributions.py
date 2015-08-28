@@ -252,6 +252,7 @@ class theta_agsne:
     theta.expected(m, n)
     """
     def __init__(self, statvars, pars):
+        self.G, self.S, self.N, self.E = statvar
         self.a, self.b = 1, E
         self.G, self.S, self.N, self.E = statvars
         self.lambda1, self.beta, self.lambda3, self.z = pars
