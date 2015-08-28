@@ -154,8 +154,9 @@ class sad_agsne:
     """SAD predicted by AGSNE. Right now only takes single input values but not a list. 
     
     Usage:
-    pmf: sad_agsne.pmf(x, lambda1, beta, upper_bound)
-    cdf: sad_agsne.cdf(x, lambda1, beta, upper_bound)
+    sad = sad_agsne([G, S, N, E], [lambda1, beta, lambda3, z])
+    pmf: sad.pmf(x)
+    cdf: sad.cdf(x)
     
     """
     def __init__(self, statvar, pars):
@@ -165,14 +166,16 @@ class sad_agsne:
         self.norm = sum(np.exp(-self.lambda1 - self.beta * np.arange(self.a, self.b + 1)) / np.arange(self.a, self.b + 1) / \
                         (1 - np.exp(-self.lambda1 - self.beta * np.arange(self.a, self.b + 1))))
      
-    def _pmf(self, x):
+    def pmf(self, x):
         if self.a <= x <= self.b and isinstance(x, int):
             pmf = np.exp(-self.lambda1 - self.beta * x) / x / (1 - np.exp(-self.lambda1 - self.beta * x)) / self.norm
         else: pmf = 0
         return pmf
     
-    def _cdf(self, x):
-        cdf = sum([self.pmf(t) for t in range(1, int(np.floor(x) + 1)]))
+    def cdf(self, x):
+        x_int = int(np.floor(x))
+        cdf = sum(np.exp(-self.lambda1 - self.beta * np.arange(self.a,  x_int + 1)) / np.arange(self.a,  x_int + 1) / \
+                        (1 - np.exp(-self.lambda1 - self.beta * np.arange(self.a,  x_int + 1)))) / self.norm
         return cdf
     
 sad_agsne = sad_agsne_gen(name='sad_agsne', longname='SAD of AGSNE', 
