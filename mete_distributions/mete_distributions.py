@@ -178,9 +178,6 @@ class sad_agsne:
                         (1 - np.exp(-self.lambda1 - self.beta * np.arange(self.a,  x_int + 1)))) / self.norm
         return cdf
     
-sad_agsne = sad_agsne_gen(name='sad_agsne', longname='SAD of AGSNE', 
-                          shapes="lambda1, beta, upper_bound")
-
 class psi_agsne:
     """ISD predicted by AGSNE, following S-40 in Harte et al. 2015, lower truncated at 1 and upper truncated at E0.
     
