@@ -54,15 +54,15 @@ def get_mete_agsne_rad(G, S, N, E, version='precise', pars = None):
         lambda1, beta, lambda3 = get_agsne_lambdas(G, S, N, E, version = version)
         lambda3z = agsne_lambda3_z(lambda1, beta, S)
         pars = [lambda1, beta, lambda3, lambda3z / lambda3]
-
-    lambda1, beta, lambda3, z = pars
+    
+    sad = medis.sad_agsne([G, S, N, E], pars)
     rank = range(1, int(S)+1)
     abundance  = list(np.empty([S]))
     cdf_obs = [(rank[i]-0.5) / S for i in range(0, int(S))]
     i, j = 1, 0
     cdf_cum = 0 
     while i <= N + 1:
-        cdf_cum += medis.sad_agsne.pmf(i, lambda1, beta, N)
+        cdf_cum += sad.pmf(i)
         while cdf_cum >= cdf_obs[j]: 
             abundance[j] = i
             j += 1
