@@ -150,7 +150,7 @@ class theta_epsilon:
             return x * self.pdf(x, n)
         return float(mpmath.quad(mom_1, [self.a, self.b]))
 
-class sad_agsne_gen(rv_discrete):
+class sad_agsne:
     """SAD predicted by AGSNE. Right now only takes single input values but not a list. 
     
     Usage:
@@ -158,23 +158,23 @@ class sad_agsne_gen(rv_discrete):
     cdf: sad_agsne.cdf(x, lambda1, beta, upper_bound)
     
     """
-    
-    def _pmf(self, x, lambda1, beta, upper_bound):
-        ivals = np.arange(1, upper_bound + 1)
-        normalization = sum(np.exp(-lambda1 - beta * ivals) / ivals / (1 - np.exp(-lambda1 - beta * ivals)))
-        pmf = np.exp(-lambda1 - beta * x) / x / (1 - np.exp(-lambda1 - beta * x)) / normalization
+    def __init__(self, statvar, pars):
+        self.G, self.S, self.N, self.E = statvar
+        self.a, self.b = 1, self.N
+        self.lambda1, self.beta, self.lambda3, self.z = pars
+        self.norm = sum(np.exp(-self.lambda1 - self.beta * np.arange(self.a, self.b + 1)) / np.arange(self.a, self.b + 1) / \
+                        (1 - np.exp(-self.lambda1 - self.beta * np.arange(self.a, self.b + 1))))
+     
+    def _pmf(self, x):
+        if self.a <= x <= self.b and isinstance(x, int):
+            pmf = np.exp(-self.lambda1 - self.beta * x) / x / (1 - np.exp(-self.lambda1 - self.beta * x)) / self.norm
+        else: pmf = 0
         return pmf
     
-    def _cdf(self, x, lambda1, beta, upper_bound):
-        cdf = sum([self.pmf(t, lambda1, beta, upper_bound) for t in range(1, x + 1)])
+    def _cdf(self, x):
+        cdf = sum([self.pmf(t) for t in range(1, int(np.floor(x) + 1)]))
         return cdf
     
-    def _argcheck(self, *args):
-        self.a = 1
-        self.b = args[2]
-        cond = (args[0] > 0) & (args[1] > 0) & (args[2] > 1)
-        return cond        
-
 sad_agsne = sad_agsne_gen(name='sad_agsne', longname='SAD of AGSNE', 
                           shapes="lambda1, beta, upper_bound")
 
