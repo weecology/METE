@@ -173,9 +173,12 @@ class sad_agsne:
         return pmf
     
     def cdf(self, x):
-        x_int = int(np.floor(x))
-        cdf = sum(np.exp(-self.lambda1 - self.beta * np.arange(self.a,  x_int + 1)) / np.arange(self.a,  x_int + 1) / \
-                        (1 - np.exp(-self.lambda1 - self.beta * np.arange(self.a,  x_int + 1)))) / self.norm
+        if self.a <= x <= self.b: 
+            x_int = int(np.floor(x))
+            cdf = sum(np.exp(-self.lambda1 - self.beta * np.arange(self.a,  x_int + 1)) / np.arange(self.a,  x_int + 1) / \
+                            (1 - np.exp(-self.lambda1 - self.beta * np.arange(self.a,  x_int + 1)))) / self.norm
+        elif x < self.a: cdf = 0
+        else: cdf = 1
         return cdf
     
 class psi_agsne:
