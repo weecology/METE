@@ -251,10 +251,9 @@ class theta_agsne:
     theta.rvs(size, m, n)
     theta.expected(m, n)
     """
-    def __init__(self, statvars, pars):
+    def __init__(self, statvar, pars):
         self.G, self.S, self.N, self.E = statvar
-        self.a, self.b = 1, E
-        self.G, self.S, self.N, self.E = statvars
+        self.a, self.b = 1, self.E
         self.lambda1, self.beta, self.lambda3, self.z = pars
  
     def pdf(self, x, m, n):
