@@ -21,7 +21,8 @@ def get_agsne_lambdas(G, S, N, E, version = 'precise'):
         # Try to provide a better initial guess by fixing lambda1 and solving for beta
         exp_1_approx = np.exp(-1/inv_1)
         Slist = np.arange(1, S + 1)
-        y3 = lambda x: np.sum(exp_1_approx ** Slist * np.log(1 / (1 - x ** Slist))) / np.sum(exp_1_approx ** Slist / Slist * np.log(1 / (1 - x ** Slist))) - S / G 
+        #y3 = lambda x: np.sum(exp_1_approx ** Slist * np.log(1 / (1 - x ** Slist))) / np.sum(exp_1_approx ** Slist / Slist * np.log(1 / (1 - x ** Slist))) - S / G
+        y3 = lambda x: np.sum((exp_1_approx * x) ** Slist / (1 - x ** Slist)) / np.sum(exp_1_approx ** Slist / Slist * np.log(1 / (1 - x ** Slist))) - N / G
         exp_beta_approx = bisect(y3, 10**-15, 1 - 10**-15)        
         def lambdas(x):
             exp_1, exp_beta = x # The two elements are exp(-lambda1), and exp(-beta)
