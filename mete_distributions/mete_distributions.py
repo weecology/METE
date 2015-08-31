@@ -150,6 +150,37 @@ class theta_epsilon:
             return x * self.pdf(x, n)
         return float(mpmath.quad(mom_1, [self.a, self.b]))
 
+class gamma_agsne: 
+    """Gamma (distribution of species among genera) predicted by AGSNE. 
+    
+    Usage:
+    gamma = gamma_agsne([G, S, N, E], [lambda1, beta, lambda3, z])
+    pmf: gamma.pmf(x)
+    cdf: gamma.cdf(x)
+    
+    """
+    def __init__(self, statvar, pars):
+        self.G, self.S, self.N, self.E = statvar
+        self.a, self.b = 1, self.S
+        self.lambda1, self.beta, self.lambda3, self.z = pars
+        S_list = np.arange(1, self.S + 1)
+        self.norm = sum(np.exp(-self.lambda1 * S_list) * np.log(1 / (1 - np.exp(-self.beta * S_list))) / S_list)
+                        
+    def pmf(self, x):
+        if self.a <= x <= self.b and isinstance(x, int):
+            pmf = np.exp(-self.lambda1 * x) * np.log(1 / (1 - np.exp(-self.beta * x))) / x / self.norm
+        else: pmf = 0
+        return pmf
+    
+    def cdf(self, x):
+        if self.a <= x <= self.b: 
+            x_int = int(np.floor(x))
+            x_list = np.arange(self.a, x_int + 1)
+            cdf = sum(np.exp(-self.lambda1 * x_list) * np.log(1 / (1 - np.exp(-self.beta * x_list))) / x) / self.norm
+        elif x < self.a: cdf = 0
+        else: cdf = 1
+        return cdf      
+    
 class sad_agsne:
     """SAD predicted by AGSNE. Right now only takes single input values but not a list. 
     
@@ -157,7 +188,7 @@ class sad_agsne:
     sad = sad_agsne([G, S, N, E], [lambda1, beta, lambda3, z])
     pmf: sad.pmf(x)
     cdf: sad.cdf(x)
-    
+    rvs: sad.rvs(size) Note that this method returns an ORDERED array, for reason of speed.
     """
     def __init__(self, statvar, pars):
         self.G, self.S, self.N, self.E = statvar
@@ -181,6 +212,21 @@ class sad_agsne:
         else: cdf = 1
         return cdf
     
+    def rvs(self, size):
+        out = []
+        rand_list = scipy.stats.uniform.rvs(size = size)
+        rand_list = sorted(rand_list)
+        i, j = 1, 0
+        cdf_cum = 0 
+        while i <= self.b + 1:
+            cdf_cum += self.pmf(i)
+            while cdf_cum >= rand_list[j]: 
+                out.append(i)
+                j += 1
+                if j == size:
+                    return np.array(out)
+            i += 1        
+        
 class psi_agsne:
     """ISD predicted by AGSNE, following S-40 in Harte et al. 2015, lower truncated at 1 and upper truncated at E0.
     
