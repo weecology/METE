@@ -94,6 +94,55 @@ class psi_epsilon:
             return x * self.pdf(x)
         return float(mpmath.quad(mom_1, [self.a, self.b]))
 
+class psi_epsilon_approx:
+    """The approximated version of inidividual-energy distribution predicted by METE
+    
+    lower truncated at 1 and upper truncated at E0. The approximation adopted is that in
+    sum(n * exp(-sigma(epsilon)*n)), n goes to infinity instead of N.
+    
+    Methods:
+    pdf - probability density function
+    cdf - cumulative density function
+    ppf - inverse cdf
+    rvs - random number generator
+    E - first moment (mean)
+    
+    """
+    def __init__(self, S0, N0, E0):
+        self.a, self.b = 1, E0
+        self.N0 = N0
+        self.beta = get_beta(S0, N0)
+        self.lambda2 = get_lambda2(S0, N0, E0)
+        self.sigma = self.beta + (E0 - 1) * self.lambda2
+        self.norm_factor = (1 / (1 - exp(-self.beta)) - 1 / (1 - exp(-self.sigma))) / self.lambda2
+
+    def pdf(self, x):
+        exp_neg_gamma = exp(-(self.beta + (x - 1) * self.lambda2))
+        if self.a <= x <= self.b:
+            return exp_neg_gamma / (1 - exp_neg_gamma) ** 2 / self.norm_factor
+        else: return 0
+
+    def cdf(self, x):
+        if self.a <= x <= self.b:
+            exp_neg_gamma = exp(-(self.beta + (x - 1) * self.lambda2))
+            unscaled_cdf = (1 / (1 - exp(-self.beta)) - 1 / (1 - exp_neg_gamma)) / self.lambda2
+            scaled_cdf = unscaled_cdf / self.norm_factor
+        elif x < self.a: scaled_cdf = 0
+        else: scaled_cdf = 1
+        return scaled_cdf
+    
+    def ppf(self, q):
+        m = log(1 - 1 / (1 / (1 - exp(-self.beta)) - q * self.norm_factor * self.lambda2)) 
+        x = (-m - (self.beta - self.lambda2)) / self.lambda2
+        return x
+        
+    def rvs(self, size):
+        out = []
+        rand_list = scipy.stats.uniform.rvs(size = size)
+        for rand_num in rand_list:
+            out.append(self.ppf(rand_num))
+        return out
+    
 class theta_epsilon:
     """Intraspecific energy/mass distribution predicted by METE (Eqn 7.25)
     
