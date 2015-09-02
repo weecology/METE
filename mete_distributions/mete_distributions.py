@@ -105,7 +105,6 @@ class psi_epsilon_approx:
     cdf - cumulative density function
     ppf - inverse cdf
     rvs - random number generator
-    E - first moment (mean)
     
     """
     def __init__(self, S0, N0, E0):
@@ -251,6 +250,14 @@ class sad_agsne:
             pmf = np.exp(-self.lambda1 - self.beta * x) / x / (1 - np.exp(-self.lambda1 - self.beta * x)) / self.norm
         else: pmf = 0
         return pmf
+    
+    def logpmf(self, x):
+        if self.a <= x <= self.b and isinstance(x, int):
+            logpmf = -self.lambda1 - self.beta * x - np.log(x) - np.log(1 - np.exp(-self.lambda1 - self.beta * x)) - np.log(self.norm)
+        else: 
+            print "Error: log(0) is undefined."
+            logpmf = None
+        return logpmf
     
     def cdf(self, x):
         if self.a <= x <= self.b: 
